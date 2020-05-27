@@ -49,10 +49,8 @@ class FaceIdentifyDataCreation(ImageAndVideo):
 
             path = os.path.sep.join([faces_folder, person_name, f'{str(i).zfill(5)}.png'])
             
-            print(f"SAVING AT {path}")
             cv2.imwrite(path, frame)
             time.sleep(1.0)
-            print("SAVED")
 
         cv2.destroyAllWindows()
         self.vs.stop()
@@ -65,7 +63,6 @@ class FaceIdentifyDataCreation(ImageAndVideo):
         # loop over the image paths
         for (i, imagePath) in enumerate(imagePaths):
             # extract the person name from the image path
-            print("Processing image {}/{}".format(i + 1, len(imagePaths)))
             name = imagePath.split(os.path.sep)[-2]
 
             # load the input image and convert it from RGB (OpenCV ordering) to dlib ordering (RGB)
@@ -77,13 +74,10 @@ class FaceIdentifyDataCreation(ImageAndVideo):
             for face in faces:
                 self.embedding_model.set_tensor(self.input_details[0]['index'], face)
                 self.embedding_model.invoke()
-                predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])
+                predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])[0]
                 encodings.append(predicted_encoding)
-
-            # loop over the encodings
+            
             for encoding in encodings:
-                # add each encoding + name to our set of known names and
-                # encodings
                 self.encoded_faces['encodings'].append(encoding)
                 self.encoded_faces['names'].append(name)
         

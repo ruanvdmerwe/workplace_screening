@@ -27,6 +27,7 @@ class ImageAndVideo(object):
 
         # load the input image from disk, clone it, and grab the image spatial dimensions
         self.image = cv2.imread(image_location)
+        #self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         (self.h, self.w) = self.image.shape[:2]
         
         if self.h >= 1000 or self.w >=1000:
@@ -135,8 +136,12 @@ class ImageAndVideo(object):
         Function to display the given prediction. Will only work
         if all the previous steps have been done.
         """
-    
-        img = Image.fromarray(self.image)
+
+        if self.frame_picture:
+           img = Image.fromarray(self.image)
+        else:
+            img = Image.fromarray(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
+        
         img.show()
 
 

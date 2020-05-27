@@ -48,8 +48,7 @@ class FaceIdentifier(ImageAndVideo):
 
         for encoding in encodings:
             # check to see if we have found a match
-
-            encoding = np.array([encoding])
+            encoding = encoding.reshape(1,-1)
             similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
             similarities = similarities/similarities.max()
             matches = [distance[0] <= tolerance for distance in similarities]
