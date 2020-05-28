@@ -11,6 +11,7 @@
 1. Be in project folder
 1. Run following command:
   python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l True
+1. In order to stop the stream, just press q
   
 ## Add a new face to model encodings (start recognizing someone new)
 
