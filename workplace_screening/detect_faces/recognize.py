@@ -9,13 +9,32 @@ from scipy.spatial import distance
 
 
 class FaceIdentifier(ImageAndVideo):
+    """
+    Class used to identify a person based on input image.
+
+    Arguments:
+        encodings_location {str}:      
+            Path to the pickle containing encodings. If the path
+            specified does not exist the path will be created.
+        embeding_model_location {str}:
+            Path towards the tf lite model that will be used 
+            to create the facial embeddings.
+
+
+    Example of usage:
+        face_embedding = FaceIdentifyDataCreation(encodings_location=encodings_location,
+                                                  embeding_model_location=embeding_model_location)
+        face_recognizer.start_video_stream()
+        face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability)
+        face_recognizer.display_predictions()
+    """
 
     def __init__(self, encodings_location, embeding_model_location):
 
         super().__init__()
 
         self.encodings_location = encodings_location
-        # if no encodings exist, add this file
+
         if os.path.isfile(encodings_location):
             self.encoded_faces = pickle.loads(open(encodings_location, "rb").read()) 
         else:
@@ -26,13 +45,24 @@ class FaceIdentifier(ImageAndVideo):
 
         self.embedding_model = tf.lite.Interpreter(model_path=embeding_model_location)
         self.embedding_model.allocate_tensors()
-        # Get input and output tensors.
         self.input_details = self.embedding_model.get_input_details()
         self.output_details = self.embedding_model.get_output_details()   
 
-    def recognize_faces(self, tolerance):
+    def recognize_faces(self, tolerance=0.35):
+        """
+        This function recognizes the faces in a given image. In order to work, an
+        image must first be loaded with either load_image_from_file or load_image_from_frame 
+        and then the detect_faces function also need to be run.
+
+        For ease of use, rather implement the capture_frame_and_recognize_faces function.
+
+
+        Arguments:
+            tolerance {float, default=0.35}:
+                Minimum distance required to match a face. The lower the value
+                the more constraint the matching will be.
+        """
         
-        # get everything in correct format
         boxes = [(y,w,x,h) for (x, y, w, h) in self.bounding_boxes]
 
         encodings = []
@@ -41,13 +71,11 @@ class FaceIdentifier(ImageAndVideo):
             self.embedding_model.set_tensor(self.input_details[0]['index'], face)
             self.embedding_model.invoke()
             predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])
-            #predicted_encoding = self.embedding_model.predict(face)
             encodings.append(predicted_encoding[0])
 
         self.recognized_faces = []
 
         for encoding in encodings:
-            # check to see if we have found a match
             encoding = encoding.reshape(1,-1)
             similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
             similarities = similarities/similarities.max()
@@ -59,8 +87,6 @@ class FaceIdentifier(ImageAndVideo):
                 sims = {}
                 counts = {}
 
-                # loop over the matched indexes and maintain a count for
-                # each recognized face face
                 for i in matchedIdxs:
                     name = self.encoded_faces["names"][i]
                     counts[name] = counts.get(name, 0) + 1
@@ -79,25 +105,48 @@ class FaceIdentifier(ImageAndVideo):
             else:
                 name = 'Unkown' 
 
-            # update the list of names
             self.recognized_faces.append(name)
 
         self.colors = [(33, 33, 183) if name == "Unkown" else (0, 102, 0) for name in self.recognized_faces]
         self.labels = ['Unkown Person' if name == "Unkown" else  f'{name} identified' for name in self.recognized_faces]
 
-        return self.labels, self.colors
-
 
     def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9):
+        """
+        Capture the current frame of the video stream and recognize the 
+        people in question.
+
+        Arguments:
+            tolerance {float, default=0.35}:
+                Minimum distance required to match a face. The lower the value
+                the more constraint the matching will be.
+            face_probability {float, default = 0.9}:
+                Minimum probability required to say face is identified. 
+        
+        Returns:
+            A list of names detected.
+        """
 
         self.capture_frame_and_load_image()
         self.detect_faces(probability=face_probability, face_size=(160,160))
         self.recognize_faces(tolerance=tolerance)
         self.draw_boxes_around_faces()
 
-        return self.labels, self.colors
+        return self.recognized_faces
 
     def capture_frame_and_recognize_faces_live(self, tolerance=0.35, face_probability=0.9):
+
+        """
+        Start a video stream and and recognize the  people in question. To stop the video stream
+        press Q.
+
+        Arguments:
+            tolerance {float, default=0.35}:
+                Minimum distance required to match a face. The lower the value
+                the more constraint the matching will be.
+            face_probability {float, default = 0.9}:
+                Minimum probability required to say face is identified. 
+        """
 
         while True:
 
@@ -117,3 +166,7 @@ class FaceIdentifier(ImageAndVideo):
                 break
                 
         cv2.destroyAllWindows()
+
+    def get_labels(self):
+
+        return self.labels

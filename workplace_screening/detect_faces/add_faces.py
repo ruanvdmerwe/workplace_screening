@@ -9,6 +9,30 @@ import numpy as np
 
 
 class FaceIdentifyDataCreation(ImageAndVideo):
+    """
+    This class can be used to add face examples to both the pickle file
+    containing all of the embeddings as well as the folder containing the
+    physical images. 
+
+    Arguments:
+        encodings_location {str}:      
+            Path to the pickle containing encodings. If the path
+            specified does not exist the path will be created.
+        embeding_model_location {str}:
+            Path towards the tf lite model that will be used 
+            to create the facial embeddings.
+
+
+    Example of usage:
+        face_embedding = FaceIdentifyDataCreation(encodings_location=encodings_location,
+                                                  embeding_model_location=embeding_model_location)
+        face_embedding.start_video_stream()
+        face_embedding.capture_frame_and_add_face(faces_folder=faces_folder, 
+                                                  person_name=person_name,
+                                                  amount_of_examples=6)
+        face_embedding.encode_faces(image_path=faces_folder)
+    """
+
 
     def __init__(self, encodings_location, embeding_model_location):
 
@@ -29,12 +53,24 @@ class FaceIdentifyDataCreation(ImageAndVideo):
         self.embedding_model.allocate_tensors()
         # Get input and output tensors.
         self.input_details = self.embedding_model.get_input_details()
-        self.output_details = self.embedding_model.get_output_details()    
+        self.output_details = self.embedding_model.get_output_details() 
+
 
     def capture_frame_and_add_face(self, faces_folder, person_name, amount_of_examples=6):
 
-        # grab the frame from the threaded video stream and resize it to have a maximum width of 400 pixels
-        print("Begining to take pictures!")
+        """
+        Capture images using the attached camera and save the images in a folder
+        specified.
+
+        Arguments:
+            faces_folder {str}:      
+                Path to the folder containing the various 
+                folders containing the face images.
+            person_name {str}:
+                Name of person being logged to the system.
+            amount_of_examples{int, default = 6}:
+                Amount of photos to be taken and saved.
+        """
 
         path = os.path.sep.join([faces_folder, person_name])
         if not os.path.exists(path):
@@ -45,7 +81,7 @@ class FaceIdentifyDataCreation(ImageAndVideo):
             frame = self.vs.read()
             frame = resize(frame, width=400)
             self.load_image_from_frame(frame)
-            (self.faces, self.bounding_boxes) = self.detect_faces(probability=0.5)
+            (self.faces, self.bounding_boxes) = self.detect_faces(probability=0.7)
 
             path = os.path.sep.join([faces_folder, person_name, f'{str(i).zfill(5)}.png'])
             
@@ -55,7 +91,19 @@ class FaceIdentifyDataCreation(ImageAndVideo):
         cv2.destroyAllWindows()
         self.vs.stop()
 
-    def encode_faces(self, image_path, detection_method='hog'):
+
+    def encode_faces(self, image_path):
+
+        """
+        Read all of the images within a specified image path and create embedding for all 
+        of the faces present. The embeddings will be linked to the folder name the images are 
+        in.
+
+        Arguments:
+            image_path {str}:      
+                Path to the folder containing the various 
+                folders containing the face images.
+        """
 
         imagePaths = list(paths.list_images(image_path))
         imagePaths = [path_ for path_ in imagePaths if path_.split(os.path.sep)[-2] not in self.encoded_faces['names']]
