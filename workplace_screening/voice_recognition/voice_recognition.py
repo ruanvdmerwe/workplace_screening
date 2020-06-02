@@ -76,7 +76,7 @@ class SpeechToText(object):
             audio = self.recorder.listen(source) 
 
         # recognize speech using Sphinx
-        print('predicting')
+        print('predicting text')
         try:
             if online: 
                 text = self.recorder.recognize_google(audio, key=key)

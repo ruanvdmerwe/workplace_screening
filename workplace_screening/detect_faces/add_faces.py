@@ -6,7 +6,7 @@ import pickle
 import cv2
 import os
 import numpy as np
-
+import time
 
 class FaceIdentifyDataCreation(ImageAndVideo):
     """
@@ -81,7 +81,7 @@ class FaceIdentifyDataCreation(ImageAndVideo):
             frame = self.vs.read()
             frame = resize(frame, width=400)
             self.load_image_from_frame(frame)
-            (self.faces, self.bounding_boxes) = self.detect_faces(probability=0.7)
+            self.detect_faces(probability=0.7)
 
             path = os.path.sep.join([faces_folder, person_name, f'{str(i).zfill(5)}.png'])
             
@@ -115,11 +115,11 @@ class FaceIdentifyDataCreation(ImageAndVideo):
 
             # load the input image and convert it from RGB (OpenCV ordering) to dlib ordering (RGB)
             self.load_image_from_file(imagePath)
-            (faces, bounding_boxes) = self.detect_faces(probability=0.5, face_size=(160,160))
+            self.detect_faces(probability=0.5, face_size=(160,160))
             bounding_boxes = [(y,w,x,h) for (x, y, w, h) in self.bounding_boxes]
             
             encodings = []
-            for face in faces:
+            for face in self.faces:
                 self.embedding_model.set_tensor(self.input_details[0]['index'], face)
                 self.embedding_model.invoke()
                 predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])[0]

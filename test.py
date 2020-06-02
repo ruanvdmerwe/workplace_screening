@@ -86,10 +86,8 @@ if __name__ == '__main__':
 
     # intiliaze all of the models
     face_mask_detector = FaceMaskDetector(mask_detect_model=mask_detect_model)
-    face_recognizer = FaceIdentifier(encodings_location=encodings_location,
-                                    embeding_model_location=embeding_model_location)
     face_embedding = FaceIdentifyDataCreation(encodings_location=encodings_location,
-                                              embeding_model_location=embeding_model_location)
+                                    embeding_model_location=embeding_model_location)
 
 
     # ----------------- run tests on previous images -----------------
@@ -122,10 +120,17 @@ if __name__ == '__main__':
     if not faces_folder is None:
         if not person_name is None:
             face_embedding.start_video_stream()
+            print("Adding new face pictures")
             face_embedding.capture_frame_and_add_face(faces_folder=faces_folder, person_name=person_name, amount_of_examples=6)
+        print("Embedding new face features")
         face_embedding.encode_faces(image_path=faces_folder)
 
+
     # ----------------- See if face is recognized -----------------
+    print("Loading face embed model")
+    face_recognizer = FaceIdentifier(encodings_location=encodings_location,
+                                    embeding_model_location=embeding_model_location)
+    print("Starting to recognize face")
     face_recognizer.start_video_stream()
     if livestream:
         face_recognizer.capture_frame_and_recognize_faces_live(tolerance=0.35)

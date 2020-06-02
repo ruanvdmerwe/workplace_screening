@@ -77,6 +77,7 @@ class FaceIdentifier(ImageAndVideo):
 
         for encoding in encodings:
             encoding = encoding.reshape(1,-1)
+            print(len(self.encoded_faces["encodings"]))
             similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
             similarities = similarities/similarities.max()
             matches = [distance[0] <= tolerance for distance in similarities]
