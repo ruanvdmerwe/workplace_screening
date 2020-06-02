@@ -1,6 +1,7 @@
 from workplace_screening.detect_facemask.detect_facemask import FaceMaskDetector
 from workplace_screening.detect_faces.recognize import FaceIdentifier
 from workplace_screening.detect_faces.add_faces import FaceIdentifyDataCreation
+from workplace_screening.voice_recognition.voice_recognition import SpeechToText
 import numpy as np
 import argparse
 
@@ -41,6 +42,17 @@ parser.add_argument('-l',
                     const = False,
                     required=True,
                     help='If true, then a livestream will be started. If stream has started press q to stop.')
+parser.add_argument('--voice',
+                    nargs='?',
+                    const = False,
+                    required=True,
+                    help='If true, then test voice to text')
+parser.add_argument('-o',
+                    '--online',
+                    nargs='?',
+                    const = False,
+                    required=True,
+                    help='If true, then test voice to text')
 
 args = vars(parser.parse_args())
 mask_detect_model = args['mask']
@@ -52,6 +64,23 @@ tolerance = float(args['tolerance'])
 face_probability = float(args['probability'])
 test = args['test']
 livestream = args['livestream']
+voice = args['voice']
+online = args['voice']
+
+if voice=='True':
+    voice = True
+else:
+    voice = False
+
+if livestream=='True':
+    livestream=True
+else:
+    livestream=False
+
+if online == 'True':
+    online = True
+else:
+    online = False
 
 if __name__ == '__main__':
 
@@ -103,3 +132,13 @@ if __name__ == '__main__':
     else:
         face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability)
         face_recognizer.display_predictions()
+
+    # ----------------- Test a few phrases -----------------
+    # just run a few voice tests
+    if voice:
+        speech_to_text = SpeechToText()
+        energy_threshold = speech_to_text.fine_tune(duration=2)
+        for i in range(5):
+            print("Please speak")
+            print(f"You said {speech_to_text.listen_and_predict(online=online)}")
+

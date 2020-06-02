@@ -45,10 +45,28 @@ class SpeechToText(object):
             return self.recorder.energy_threshold   
 
 
-    def listen_and_predict(self):
+    def listen_and_predict(self, online = False, key=None):
         """
         This function will start the microphone and listen for 
         an answer to be provided and extract the answer from it.
+
+        Arguments:
+            online {boolean, default=False}:
+                If set to true, prediction will be made online
+                using the google cloud api, which is the most 
+                accurate implementation. If set to false, the 
+                pocketsphinx api will be used which works offline,
+                but does not perform as good as the online version.
+
+            key {str, default=None}:
+                This is not required for the online use as there
+                is a generic key that can be used. But this key
+                kan be revoked at any time by google so to be safe 
+                a personal key should be obtained. To obtain your own
+                API key, simply following the steps on the  API Keys 
+                <http://www.chromium.org/developers/how-tos/api-keys> page at
+                the Chromium Developers site. In the Google Developers 
+                Console, Google Speech Recognition is listed as "Speech API".
 
          Returns:
             A string value indicating either yes, no or unkown.
@@ -58,22 +76,28 @@ class SpeechToText(object):
             audio = self.recorder.listen(source) 
 
         # recognize speech using Sphinx
+        print('predicting')
         try:
-           text = self.recorder.recognize_sphinx(audio)
+            if online: 
+                text = self.recorder.recognize_google(audio, key=key)
+            else:
+                text = self.recorder.recognize_sphinx(audio)
         except sr.UnknownValueError:
             return 'unkown'
         except sr.RequestError as e:
             return 'unkown with error'
-
+        
         text_split = text.split()
-        print(text)
+        
+        # acceptable responses for yes and no
+        acceptable_yes = set(['yes', 'yet'])
+        acceptable_no = set(['no', 'know'])
 
-        if 'yes' in text_split and 'no' in text_split:
+        if bool(set(text_split).intersection(acceptable_yes)) and bool(set(text_split).intersection(acceptable_no)):
             return 'unkown'
-        elif 'yes' in text_split:
+        elif bool(set(text_split).intersection(acceptable_yes)):
             return 'yes'
-        elif 'no' in text_split:
+        elif bool(set(text_split).intersection(acceptable_no)):
             return 'no'
-
 
         return 'unkown'
