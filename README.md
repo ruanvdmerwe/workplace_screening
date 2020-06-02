@@ -1,7 +1,24 @@
 # Setup
 
 1. Clone github reporisoty and change to the project folder
-1. Create a new environement
+1. Create a new environement:
+
+        virtualenv env -p python3
+        source env/bin/activate
+  
+1. If on a mac, install the required dependencies for pocketshpinx and pyaudio:
+
+        brew install cmake
+        brew install cmu-pocketsphinx
+        brew install portaudio
+        brew install swig
+        brew install openal-soft
+        
+1. Add a symlink for OpenAl
+
+        cd /usr/local/include
+        ln -s /usr/local/Cellar/openal-soft/1.20.1/include/AL/* .
+        
 1. In terminal, run pip install -r requirements.txt
 
 # Running a few tests
