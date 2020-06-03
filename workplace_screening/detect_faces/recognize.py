@@ -92,7 +92,7 @@ class FaceIdentifier(ImageAndVideo):
                 print('Distance scores:')
                 print([f'{name}: {score}' for name,score in zip(self.encoded_faces["names"], similarities)])
 
-            if True in matches and sum(matches) >= 2:
+            if True in matches:
 
                 matchedIdxs = [i for (i, b) in enumerate(matches) if b]
                 sims = {}
@@ -115,7 +115,7 @@ class FaceIdentifier(ImageAndVideo):
                     print('Matched simalarities')
                     print(sims)
 
-                average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if not np.isnan(np.mean(sim))}
+                average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=1}
 
                 if verbose:
                     print('Final scores')
