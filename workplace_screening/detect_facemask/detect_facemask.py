@@ -3,6 +3,7 @@ from ..core.core import ImageAndVideo
 from imutils import resize
 import cv2
 
+
 class FaceMaskDetector(ImageAndVideo):
     """
     Class used to predict the probability of a face
@@ -28,7 +29,7 @@ class FaceMaskDetector(ImageAndVideo):
         self.input_details = self.mask_model.get_input_details()
         self.output_details = self.mask_model.get_output_details()     
 
-    def detect_facemask(self, mask_probability=0.995):
+    def detect_facemask(self, mask_probability=0.995, verbose=False):
         """
         This function detects if the various faces in an image is wearing a face mask.
         In order to work, an image must first be loaded with either load_image_from_file
@@ -40,6 +41,8 @@ class FaceMaskDetector(ImageAndVideo):
         Arguments:
             mask_probability {float, default=0.995}:
                 Minimum probability required to say mask is identified.
+            verbose {boolean, default=False}:
+                If true, will print the probability of wearing a mask.
         """
 
         self.labels = []
@@ -51,6 +54,10 @@ class FaceMaskDetector(ImageAndVideo):
             self.mask_model.invoke()
             mask_prob = self.mask_model.get_tensor(self.output_details[0]['index'])
 
+            if verbose:
+                print('-'*100)
+                print(f'Probability of wearing mask: {1-mask_prob[0][0]}')
+
             label = "Wearing Mask" if (1-mask_prob[0][0]) >= mask_probability else "No Mask"
 
             color = (0, 102, 0) if "Wearing Mask" in label  else (33, 33, 183)
@@ -59,7 +66,7 @@ class FaceMaskDetector(ImageAndVideo):
             self.colors.append(color)
             
     
-    def capture_frame_and_detect_facemask(self, mask_probability=0.995, face_probability=0.9):
+    def capture_frame_and_detect_facemask(self, mask_probability=0.995, face_probability=0.9, verbose = False):
         """
         Capture the current frame of the video stream and predict of the 
         people in question are wearing face masks.
@@ -68,7 +75,9 @@ class FaceMaskDetector(ImageAndVideo):
             mask_probability {float, default=0.995}:
                 Minimum probability required to say mask is identified.
             face_probability {float, default = 0.9}:
-                Minimum probability required to say face is identified. 
+                Minimum probability required to say face is identified.
+            verbose {boolean, default=False}:
+                If true, will print the probability of wearing a mask. 
         
         Returns:
             Boolean indicating if mask is found or not. True for detection.
@@ -76,7 +85,7 @@ class FaceMaskDetector(ImageAndVideo):
 
         self.capture_frame_and_load_image()
         self.detect_faces(probability=face_probability)
-        self.detect_facemask(mask_probability=mask_probability)
+        self.detect_facemask(mask_probability=mask_probability, verbose=verbose)
         self.draw_boxes_around_faces()
         
         for label in self.labels:
@@ -86,7 +95,7 @@ class FaceMaskDetector(ImageAndVideo):
         return False
 
 
-    def capture_frame_and_detect_facemask_live(self, mask_probability=0.975, face_probability=0.9):
+    def capture_frame_and_detect_facemask_live(self, mask_probability=0.975, face_probability=0.9, verbose = False):
         """
         Start a video stream and show if a mask is detected or not. To stop the video stream
         press Q.
@@ -95,7 +104,9 @@ class FaceMaskDetector(ImageAndVideo):
             mask_probability {float, default=0.995}:
                 Minimum probability required to say mask is identified.
             face_probability {float, default = 0.9}:
-                Minimum probability required to say face is identified. 
+                Minimum probability required to say face is identified.
+            verbose {boolean, default=False}:
+                If true, will print the probability of wearing a mask 
         """
 
         while True:
@@ -106,7 +117,7 @@ class FaceMaskDetector(ImageAndVideo):
 
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability)
-            self.detect_facemask(mask_probability=mask_probability)
+            self.detect_facemask(mask_probability=mask_probability, verbose=verbose)
             self.draw_boxes_around_faces()
             
             # for label, box, color in zip(labels, bounding_boxes, colors):

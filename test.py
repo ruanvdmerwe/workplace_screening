@@ -53,6 +53,11 @@ parser.add_argument('-o',
                     const = False,
                     required=True,
                     help='If true, then test voice to text')
+parser.add_argument('-v',
+                    '--verbose',
+                    nargs='?',
+                    const = False,
+                    help='If true, then print more information')
 
 args = vars(parser.parse_args())
 mask_detect_model = args['mask']
@@ -66,6 +71,12 @@ test = args['test']
 livestream = args['livestream']
 voice = args['voice']
 online = args['voice']
+verbose = args['verbose']
+
+if verbose == 'True':
+    verbose = True
+else:
+    verbose = False
 
 if voice=='True':
     voice = True
@@ -111,9 +122,9 @@ if __name__ == '__main__':
     # ----------------- detecting if you are wearing a face mask -----------------
     face_mask_detector.start_video_stream()
     if livestream:
-        face_mask_detector.capture_frame_and_detect_facemask_live()
+        face_mask_detector.capture_frame_and_detect_facemask_live(verbose=verbose)
     else:
-        face_mask_detector.capture_frame_and_detect_facemask()
+        face_mask_detector.capture_frame_and_detect_facemask(verbose=verbose)
         face_mask_detector.display_predictions()
 
     # # ----------------- Adding a new face to faces dataset -----------------
@@ -133,9 +144,9 @@ if __name__ == '__main__':
     print("Starting to recognize face")
     face_recognizer.start_video_stream()
     if livestream:
-        face_recognizer.capture_frame_and_recognize_faces_live(tolerance=0.35)
+        face_recognizer.capture_frame_and_recognize_faces_live(tolerance=0.35,verbose=verbose)
     else:
-        face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability)
+        face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability,verbose=verbose)
         face_recognizer.display_predictions()
 
     # ----------------- Test a few phrases -----------------

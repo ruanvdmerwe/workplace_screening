@@ -48,7 +48,7 @@ class FaceIdentifier(ImageAndVideo):
         self.input_details = self.embedding_model.get_input_details()
         self.output_details = self.embedding_model.get_output_details()   
 
-    def recognize_faces(self, tolerance=0.35):
+    def recognize_faces(self, tolerance=0.35, verbose = False):
         """
         This function recognizes the faces in a given image. In order to work, an
         image must first be loaded with either load_image_from_file or load_image_from_frame 
@@ -61,6 +61,9 @@ class FaceIdentifier(ImageAndVideo):
             tolerance {float, default=0.35}:
                 Minimum distance required to match a face. The lower the value
                 the more constraint the matching will be.
+            verbose {boolean, default=False}:
+                If set to true, will print all the information regarding the 
+                recognition process.
         """
         
         boxes = [(y,w,x,h) for (x, y, w, h) in self.bounding_boxes]
@@ -75,12 +78,19 @@ class FaceIdentifier(ImageAndVideo):
 
         self.recognized_faces = []
 
+        if verbose:
+            print('-'*100)
+            print(f'Total faces to be matched against: {len(self.encoded_faces["encodings"])}')
+
         for encoding in encodings:
             encoding = encoding.reshape(1,-1)
-            print(len(self.encoded_faces["encodings"]))
             similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
             similarities = similarities/similarities.max()
             matches = [distance[0] <= tolerance for distance in similarities]
+
+            if verbose:
+                print('Distance scores:')
+                print([f'{name}: {score}' for name,score in zip(self.encoded_faces["names"], similarities)])
 
             if True in matches and sum(matches) >= 2:
 
@@ -101,7 +111,16 @@ class FaceIdentifier(ImageAndVideo):
                     name = self.encoded_faces["names"][i]
                     sims[name].append(similarity)
 
+                if verbose:
+                    print('Matched simalarities')
+                    print(sims)
+
                 average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if not np.isnan(np.mean(sim))}
+
+                if verbose:
+                    print('Final scores')
+                    print(average_sim)
+
                 name = min(average_sim, key=average_sim.get)
             else:
                 name = 'Unkown' 
@@ -112,7 +131,7 @@ class FaceIdentifier(ImageAndVideo):
         self.labels = ['Unkown Person' if name == "Unkown" else  f'{name} identified' for name in self.recognized_faces]
 
 
-    def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9):
+    def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9, verbose=False):
         """
         Capture the current frame of the video stream and recognize the 
         people in question.
@@ -123,6 +142,9 @@ class FaceIdentifier(ImageAndVideo):
                 the more constraint the matching will be.
             face_probability {float, default = 0.9}:
                 Minimum probability required to say face is identified. 
+            verbose {boolean, default=False}:
+                If set to true, will print all the information regarding the 
+                recognition process.
         
         Returns:
             A list of names detected.
@@ -130,12 +152,12 @@ class FaceIdentifier(ImageAndVideo):
 
         self.capture_frame_and_load_image()
         self.detect_faces(probability=face_probability, face_size=(160,160))
-        self.recognize_faces(tolerance=tolerance)
+        self.recognize_faces(tolerance=tolerance, verbose=verbose)
         self.draw_boxes_around_faces()
 
         return self.recognized_faces
 
-    def capture_frame_and_recognize_faces_live(self, tolerance=0.35, face_probability=0.9):
+    def capture_frame_and_recognize_faces_live(self, tolerance=0.35, face_probability=0.9, verbose=False):
 
         """
         Start a video stream and and recognize the  people in question. To stop the video stream
@@ -146,7 +168,10 @@ class FaceIdentifier(ImageAndVideo):
                 Minimum distance required to match a face. The lower the value
                 the more constraint the matching will be.
             face_probability {float, default = 0.9}:
-                Minimum probability required to say face is identified. 
+                Minimum probability required to say face is identified.
+            verbose {boolean, default=False}:
+                If set to true, will print all the information regarding the 
+                recognition process. 
         """
 
         while True:
@@ -157,7 +182,7 @@ class FaceIdentifier(ImageAndVideo):
 
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability, face_size=(160,160))
-            self.recognize_faces(tolerance=tolerance)
+            self.recognize_faces(tolerance=tolerance, verbose=verbose)
             self.draw_boxes_around_faces()
 
             key = cv2.waitKey(1) & 0xFF
