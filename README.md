@@ -5,6 +5,14 @@
 
         virtualenv env -p python3
         source env/bin/activate
+        
+1. If on Raspberry Pi, install required dependencies for openCV:
+
+        sudo apt-get install libhdf5-dev libhdf5-serial-dev libhdf5-103
+        sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
+        sudo apt-get install libatlas-base-dev
+        sudo apt-get install libjasper-dev
+
   
 1. If on a mac, install the required dependencies for pocketshpinx and pyaudio:
 
