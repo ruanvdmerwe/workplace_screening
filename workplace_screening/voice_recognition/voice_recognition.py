@@ -45,7 +45,7 @@ class SpeechToText(object):
             return self.recorder.energy_threshold   
 
 
-    def listen_and_predict(self, online = False, key=None):
+    def listen_and_predict(self, online = False, key=None, verbose=False):
         """
         This function will start the microphone and listen for 
         an answer to be provided and extract the answer from it.
@@ -92,6 +92,9 @@ class SpeechToText(object):
         # acceptable responses for yes and no
         acceptable_yes = set(['yes', 'yet'])
         acceptable_no = set(['no', 'know'])
+
+        if verbose:
+            print(f'Model predicted: {text}')
 
         if bool(set(text_split).intersection(acceptable_yes)) and bool(set(text_split).intersection(acceptable_no)):
             return 'unkown'
