@@ -140,5 +140,7 @@ if __name__ == '__main__':
         speech_to_text = SpeechToText()
         energy_threshold = speech_to_text.fine_tune(duration=2)
         for i in range(5):
+            print('Fine tuning microphone for 1 second')
+            speech_to_text.fine_tune(duration=1)
             print("Please speak")
             print(f"You said {speech_to_text.listen_and_predict(online=online)}")
