@@ -143,4 +143,4 @@ if __name__ == '__main__':
             print('Fine tuning microphone for 1 second')
             speech_to_text.fine_tune(duration=1)
             print("Please speak")
-            print(f"You said {speech_to_text.listen_and_predict(online=online)}")
+            print(f"Your answer to: {speech_to_text.listen_and_predict(online=online)}")
