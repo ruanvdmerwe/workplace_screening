@@ -4,7 +4,7 @@
         
 1. If on Raspberry Pi
         
-    1. install required dependencies for openCV, PyAudio and PocktSphinx:
+    1. install required dependencies for openCV, PyAudio and PocktSphinx etc.:
     
             sudo apt-get install cmake
             sudo apt-get install swig
@@ -13,8 +13,9 @@
             sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
             sudo apt-get install libatlas-base-dev
             sudo apt-get install libjasper-dev
+            sudo apt-get install flac
 
-    2. install pocketsphinx itself as per [https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi]()
+    2. install PocketSphinx itself as per [https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi]()
         
     3. install _virtualenv_ for setting up the python environment, and add it to your _PATH_:
 
@@ -23,7 +24,7 @@
 
 1. If on a Mac
 
-    1. install the required dependencies for pocketshpinx and pyaudio:
+    1. install the required dependencies for PocketShpinx and pyaudio:
 
             brew install cmake
             brew install cmu-pocketsphinx
