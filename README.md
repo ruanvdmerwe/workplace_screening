@@ -35,8 +35,9 @@
             cd /usr/local/include
             ln -s /usr/local/Cellar/openal-soft/1.20.1/include/AL/* .
         
-1. Create a new environement:
+1. In the project folder, create a new Python environement:
 
+        cd workplace_screening_dev
         virtualenv env -p python3
         source env/bin/activate
 
