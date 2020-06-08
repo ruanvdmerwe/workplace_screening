@@ -13,7 +13,7 @@
     
             sudo apt-get install cmake swig libpulse-dev libhdf5-dev libhdf5-serial-dev libhdf5-103 libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5 libatlas-base-dev libjasper-dev flac -y
 
-    2. install PocketSphinx itself as per [https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi]()
+    2. install PocketSphinx itself as per [this blog post](https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi).
         
     3. install _virtualenv_ for setting up the python environment, and add it to your _PATH_:
 
