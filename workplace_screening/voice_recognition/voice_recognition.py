@@ -83,9 +83,9 @@ class SpeechToText(object):
             else:
                 text = self.recorder.recognize_sphinx(audio)
         except sr.UnknownValueError:
-            return 'unkown'
+            return 'Model could not understand the audio'
         except sr.RequestError as e:
-            return 'unkown with error'
+            return 'Error when predicting the text'
         
         text_split = text.split()
         
