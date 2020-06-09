@@ -3,19 +3,17 @@
 1. Clone github reporisoty and change to the project folder
         
 1. If on Raspberry Pi
+
+    1. update & upgrade installed packages
+
+            sudo apt-get update
+            sudo apt-get upgrade
         
     1. install required dependencies for openCV, PyAudio and PocktSphinx etc.:
     
-            sudo apt-get install cmake
-            sudo apt-get install swig
-            sudo apt-get install libpulse-dev
-            sudo apt-get install libhdf5-dev libhdf5-serial-dev libhdf5-103
-            sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
-            sudo apt-get install libatlas-base-dev
-            sudo apt-get install libjasper-dev
-            sudo apt-get install flac
+            sudo apt-get install cmake swig libpulse-dev libhdf5-dev libhdf5-serial-dev libhdf5-103 libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5 libatlas-base-dev libjasper-dev flac -y
 
-    2. install PocketSphinx itself as per [https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi]()
+    2. install PocketSphinx itself as per [this blog post](https://howchoo.com/g/ztbhyzfknze/how-to-install-pocketsphinx-on-a-raspberry-pi).
         
     3. install _virtualenv_ for setting up the python environment, and add it to your _PATH_:
 
@@ -37,8 +35,9 @@
             cd /usr/local/include
             ln -s /usr/local/Cellar/openal-soft/1.20.1/include/AL/* .
         
-1. Create a new environement:
+1. In the project folder, create a new Python environement:
 
+        cd workplace_screening_dev
         virtualenv env -p python3
         source env/bin/activate
 
