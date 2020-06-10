@@ -11,6 +11,7 @@ import argparse
 import time
 import math
 import numpy as np
+import pickle
 
 def add_text_to_image(image, text):
     """
@@ -51,10 +52,10 @@ def add_text_to_image(image, text):
     return image
 
 class WorkPlaceScreening(object):
-    def __init__(self, vs, outputPath):
+    def __init__(self, vs):
 
         self.vs = vs
-        self.outputPath = outputPath
+
         self.frame = None
         self.thread = None
         self.stopEvent = None
@@ -73,33 +74,46 @@ class WorkPlaceScreening(object):
 
 
     def videoLoop(self):
-        #try:
+    #    try:
+            frame_counter = 0
+            text = "STOP! We need to check your mask, temperature and symptoms before you enter."
+
             while not self.stopEvent.is_set():
+
+                if frame_counter == 3:
+                    with open('frame.pkl', 'wb') as filetowrite:
+                        pickle.dump(self.frame, filetowrite)
+
+                    try:
+                        with open ('predictions.pkl', 'rb') as myfile:  # Open lorem.txt for reading text
+                            new_text = pickle.load(myfile)
+                    except:
+                        new_text = None
+                    
+                    if not new_text is None:
+                        text = new_text
+                    frame_counter = 0
+
                 self.frame = self.vs.read()
                 self.frame = resize(self.frame, width=900)
-
-                text = "STOP! We need to check your mask, temperature and symptoms before you enter."
-                restart = False
                 
-                while not restart:
-                    self.frame = self.vs.read()
-                    self.frame = resize(self.frame, width=900)
-                    image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
-                    image = add_text_to_image(image, text)
-                    image = Image.fromarray(image)
-                    image = ImageTk.PhotoImage(image)
+                self.frame = resize(self.frame, width=900)
+                image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
+                image = add_text_to_image(image, text)
+                image = Image.fromarray(image)
+                image = ImageTk.PhotoImage(image)
 
-                    if self.panel is None:
-                        self.panel = tki.Label(image=image)
-                        self.panel.image = image
-                        self.panel.pack(side="left", padx=1, pady=1)
-                    else:
-                        self.panel.configure(image=image)
-                        self.panel.image = image
+                if self.panel is None:
+                    self.panel = tki.Label(image=image)
+                    self.panel.image = image
+                    self.panel.pack(side="left", padx=1, pady=1)
+                else:
+                    self.panel.configure(image=image)
+                    self.panel.image = image
+
+                frame_counter = frame_counter + 1 
+                
                     
-                    with open ('predictions.txt', 'rt') as myfile:  # Open lorem.txt for reading text
-                        text = myfile.read()
-                    print(text)
         # except:
         #     print("There was an error")
             
@@ -111,7 +125,7 @@ class WorkPlaceScreening(object):
 
 vs = VideoStream(src=0).start()
 time.sleep(2.0)
-wps = WorkPlaceScreening(vs, './faces/')
+wps = WorkPlaceScreening(vs)
 #wps.root.attributes("-fullscreen", True)
 wps.root.mainloop()
 
