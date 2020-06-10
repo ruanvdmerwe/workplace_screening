@@ -72,19 +72,22 @@ class FaceIdentifyDataCreation(ImageAndVideo):
                 Amount of photos to be taken and saved.
         """
 
+        print(f"capture_frame_and_add_face for '{person_name}'")
         path = os.path.sep.join([faces_folder, person_name])
         if not os.path.exists(path):
+            priint(f"creating directory: {path}")
             os.makedirs(path)
 
         for i in range(amount_of_examples):
-
+            print(f"{i} capturing frame")
             frame = self.vs.read()
             frame = resize(frame, width=400)
             self.load_image_from_frame(frame)
+            print("detecting faces")
             self.detect_faces(probability=0.7)
 
             path = os.path.sep.join([faces_folder, person_name, f'{str(i).zfill(5)}.png'])
-            
+            print(f"writing image {path}")
             cv2.imwrite(path, frame)
             time.sleep(1.0)
 
@@ -105,11 +108,13 @@ class FaceIdentifyDataCreation(ImageAndVideo):
                 folders containing the face images.
         """
 
+        print("encoding faces")
         imagePaths = list(paths.list_images(image_path))
         imagePaths = [path_ for path_ in imagePaths if path_.split(os.path.sep)[-2] not in self.encoded_faces['names']]
 
         # loop over the image paths
         for (i, imagePath) in enumerate(imagePaths):
+            print(f"{i}: {imagePath}")
             # extract the person name from the image path
             name = imagePath.split(os.path.sep)[-2]
 

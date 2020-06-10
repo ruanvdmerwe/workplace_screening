@@ -115,13 +115,17 @@ class FaceIdentifier(ImageAndVideo):
                     print('Matched simalarities')
                     print(sims)
 
-                average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=1}
+                average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=2}
 
                 if verbose:
                     print('Final scores')
                     print(average_sim)
 
-                name = min(average_sim, key=average_sim.get)
+                try:
+                    name = min(average_sim, key=average_sim.get)
+                except:
+                    name = 'Unkown'
+
             else:
                 name = 'Unkown' 
 
@@ -130,6 +134,7 @@ class FaceIdentifier(ImageAndVideo):
         self.colors = [(33, 33, 183) if name == "Unkown" else (0, 102, 0) for name in self.recognized_faces]
         self.labels = ['Unkown Person' if name == "Unkown" else  f'{name} identified' for name in self.recognized_faces]
 
+        return self.recognized_faces
 
     def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9, verbose=False):
         """
@@ -154,6 +159,7 @@ class FaceIdentifier(ImageAndVideo):
         self.detect_faces(probability=face_probability, face_size=(160,160))
         self.recognize_faces(tolerance=tolerance, verbose=verbose)
         self.draw_boxes_around_faces()
+ 
 
         return self.recognized_faces
 
@@ -183,6 +189,7 @@ class FaceIdentifier(ImageAndVideo):
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability, face_size=(160,160))
             self.recognize_faces(tolerance=tolerance, verbose=verbose)
+            self.image = cv2.flip(self.image, 1)
             self.draw_boxes_around_faces()
 
             key = cv2.waitKey(1) & 0xFF

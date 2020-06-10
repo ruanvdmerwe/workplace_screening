@@ -58,6 +58,7 @@ class ImageAndVideo(object):
         # ensure correct color format as models were trained on
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         (self.h, self.w) = self.image.shape[:2]
+
         self.frame_picture = True
         
 
@@ -106,6 +107,8 @@ class ImageAndVideo(object):
                     self.faces.append(face)
                 except:
                     pass
+
+        return len(self.faces)
 
     
     def draw_boxes_around_faces(self, labels=[], colors = []):
@@ -163,7 +166,7 @@ class ImageAndVideo(object):
         time.sleep(2.0)
 
 
-    def capture_frame_and_load_image(self, stop = True):
+    def capture_frame_and_load_image(self, stop = True, vs=None):
 
         """
         Captures the current frame of the video stream and load it
@@ -176,7 +179,10 @@ class ImageAndVideo(object):
         """
 
         # grab the frame from the threaded video stream and resize it to have a maximum width of 400 pixels
-        frame = self.vs.read()
+        if vs is None:
+            frame = self.vs.read()
+        else:
+            frame = vs.read()
         frame = resize(frame, width=400)
 
         if stop:

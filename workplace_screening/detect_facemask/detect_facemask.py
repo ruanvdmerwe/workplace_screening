@@ -53,7 +53,7 @@ class FaceMaskDetector(ImageAndVideo):
             self.mask_model.set_tensor(self.input_details[0]['index'], face)
             self.mask_model.invoke()
             mask_prob = self.mask_model.get_tensor(self.output_details[0]['index'])
-
+           
             if verbose:
                 print('-'*100)
                 print(f'Probability of wearing mask: {1-mask_prob[0][0]}')
@@ -62,8 +62,15 @@ class FaceMaskDetector(ImageAndVideo):
 
             color = (0, 102, 0) if "Wearing Mask" in label  else (33, 33, 183)
 
+            print(label)
             self.labels.append(label)
             self.colors.append(color)
+
+
+            if "Wearing Mask" in label:
+                return True
+
+            return False
             
     
     def capture_frame_and_detect_facemask(self, mask_probability=0.995, face_probability=0.9, verbose = False):
@@ -118,13 +125,8 @@ class FaceMaskDetector(ImageAndVideo):
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability)
             self.detect_facemask(mask_probability=mask_probability, verbose=verbose)
+            self.image = cv2.flip(self.image, 1)
             self.draw_boxes_around_faces()
-            
-            # for label, box, color in zip(labels, bounding_boxes, colors):
-            #     cv2.putText(frame, label, (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-            #     cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
-            #     # show the output frame
-            #     cv2.imshow("Frame", frame)
 
             key = cv2.waitKey(1) & 0xFF
             cv2.imshow("Frame", cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
