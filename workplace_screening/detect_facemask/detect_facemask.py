@@ -125,7 +125,6 @@ class FaceMaskDetector(ImageAndVideo):
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability)
             self.detect_facemask(mask_probability=mask_probability, verbose=verbose)
-            self.image = cv2.flip(self.image, 1)
             self.draw_boxes_around_faces()
 
             key = cv2.waitKey(1) & 0xFF
