@@ -11,8 +11,6 @@ import argparse
 import time
 import math
 import numpy as np
-from .detect_facemask.detect_facemask import FaceMaskDetector
-from .detect_faces.recognize import FaceIdentifier
 
 def add_text_to_image(image, text):
     """
@@ -52,12 +50,6 @@ def add_text_to_image(image, text):
             image = cv2.putText(image, sentence, org, font, fontScale, color, thickness, cv2.LINE_AA) 
     return image
 
-
-FACE_MASK_DETECTOR = FaceMaskDetector(mask_detect_model='./workplace_screening/facemask_detection_model.tflite')
-FACE_RECOGNIZER = FaceIdentifier(encodings_location='./workplace_screening/encodings.pkl',
-                                 embeding_model_location='./workplace_screening/face_embedding_model.tflite')
-
-
 class WorkPlaceScreening(object):
     def __init__(self, vs, outputPath):
 
@@ -81,7 +73,7 @@ class WorkPlaceScreening(object):
 
 
     def videoLoop(self):
-        try:
+        #try:
             while not self.stopEvent.is_set():
                 self.frame = self.vs.read()
                 self.frame = resize(self.frame, width=900)
@@ -90,7 +82,6 @@ class WorkPlaceScreening(object):
                 restart = False
                 
                 while not restart:
-
                     self.frame = self.vs.read()
                     self.frame = resize(self.frame, width=900)
                     image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
@@ -106,31 +97,11 @@ class WorkPlaceScreening(object):
                         self.panel.configure(image=image)
                         self.panel.image = image
                     
-                    frame = resize(self.frame, width=400)
-                    FACE_RECOGNIZER.load_image_from_frame(frame)
-                    number_of_faces = FACE_RECOGNIZER.detect_faces(probability=0.8, face_size=(160,160))
-                    recognized_names = FACE_RECOGNIZER.recognize_faces(tolerance=0.35, verbose=False)
-
-                    FACE_MASK_DETECTOR.load_image_from_frame(frame)
-                    FACE_MASK_DETECTOR.detect_faces(probability=0.8, face_size=(224,224))
-                    mask_detected = FACE_MASK_DETECTOR.detect_facemask()
-                    recognized_names.append("Unkown")
-
-                    if number_of_faces >= 1:
-                        if mask_detected:
-                            if recognized_names[0] != 'Unkown':
-                                text = f"Thanks for wearing your mask, {str(recognized_names[0]).capitalize()}. Going to take your temperature now."
-                            else:
-                                text = "Thanks for wearing your mask. Going to take your temperature now."
-                        else:
-                            if recognized_names[0] != 'Unkown':
-                                text = f"You are not allowed in without a mask {str(recognized_names[0]).capitalize()}. Please wear your mask"
-                            else:
-                                text = "You are not allowed in without a mask. Please wear your mask."
-                    else:
-                        text = "STOP! We need to check your mask, temperature and symptoms before you enter."
-        except:
-            print("There was an error")
+                    with open ('predictions.txt', 'rt') as myfile:  # Open lorem.txt for reading text
+                        text = myfile.read()
+                    print(text)
+        # except:
+        #     print("There was an error")
             
     def onClose(self):
         self.stopEvent.set()
