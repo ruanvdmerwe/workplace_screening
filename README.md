@@ -47,24 +47,38 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
 
 # Running a few tests
 
-## Create a livestream
+## Create a livestream for facemask detection
 
 1. From the project folder:
     
-       python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l True --voice False --online False 
+       python test.py -m ./workplace_screening/facemask_detection_model.tflite --l True --voice False --online False 
 
 1. To stop the stream, press `q`
-  
-## Add a new face to model encodings (start recognizing someone new)
 
-    python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l False -n ./workplace_screening/faces/ -p {persons_name} --voice False --online False
-   
+## Add a new face to model encoding
+
+1. Add a new folder containing six photos of the new person to the folder containing all of the previous photo folders. This new folder should be the name of the new person.
+
+1. In this example, the faces are in the path workplace_screening/faces, so add the new face their. Ensure that the encodings pickle file is also correct (the f flag).
+
+1. From the project folder:
+
+    python test.py -n workplace_screening/faces/ -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite --voice False --online False -l False
+    
+## Create a livestream for face recognition
+
+1. From the project folder:
+    
+       python test.py -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite --voice False --online False -l True
+
+1. To stop the stream, press `q`
+    
 ## Take a snapshot and predict face mask and recognize face
 
     python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l False --voice False --online False
    
 ## Test voice regocnition 
         
-    python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l False --voice True --online {False/True}
+    python test.py  --l False --voice True --online {False/True}
 
 If the `online` flag is set to `true`, it will use the _Google Cloud API_, otherwhise it will use _PocketSphinx_.
