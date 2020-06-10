@@ -12,6 +12,7 @@ import time
 import math
 import numpy as np
 import pickle
+from .voice_recognition.voice_recognition import SpeechToText
 
 def add_text_to_image(image, text):
     """
@@ -29,15 +30,16 @@ def add_text_to_image(image, text):
     """
 
     font = cv2.FONT_HERSHEY_SIMPLEX 
-    org = (20, 400) 
     fontScale = 0.7
     color = (255, 0, 0) 
     thickness = 1
     height, width, dim = image.shape
+    org = (20, height-50) 
     number_of_characters = len(text)
 
     
     if number_of_characters<42:
+       image = cv2.rectangle(image, (0, height), (0 + width, height-50-1*25 - 25), (0,0,0), -1)
        return cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA) 
     else:
         number_of_sentences = math.ceil(number_of_characters/42)
@@ -74,26 +76,23 @@ class WorkPlaceScreening(object):
 
 
     def videoLoop(self):
-    #    try:
             frame_counter = 0
             text = "STOP! We need to check your mask, temperature and symptoms before you enter."
+            continue_to_questions = False
 
             while not self.stopEvent.is_set():
 
-                if frame_counter == 3:
-                    with open('frame.pkl', 'wb') as filetowrite:
+                try:
+                    with open('./workplace_screening/frame.pkl', 'wb') as filetowrite:
                         pickle.dump(self.frame, filetowrite)
 
-                    try:
-                        with open ('predictions.pkl', 'rb') as myfile:  # Open lorem.txt for reading text
-                            new_text = pickle.load(myfile)
-                    except:
-                        new_text = None
-                    
-                    if not new_text is None:
-                        text = new_text
-                    frame_counter = 0
+                    with open ('./workplace_screening/state.pkl', 'rb') as myfile:  # Open lorem.txt for reading text
+                        text = pickle.load(myfile)
+                except:
+                    pass
 
+
+                    
                 self.frame = self.vs.read()
                 self.frame = resize(self.frame, width=900)
                 
@@ -111,11 +110,7 @@ class WorkPlaceScreening(object):
                     self.panel.configure(image=image)
                     self.panel.image = image
 
-                frame_counter = frame_counter + 1 
-                
-                    
-        # except:
-        #     print("There was an error")
+                frame_counter = frame_counter + 1
             
     def onClose(self):
         self.stopEvent.set()
