@@ -62,6 +62,7 @@ class FaceMaskDetector(ImageAndVideo):
 
             color = (0, 102, 0) if "Wearing Mask" in label  else (33, 33, 183)
 
+            print(label)
             self.labels.append(label)
             self.colors.append(color)
 
