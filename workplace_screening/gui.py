@@ -31,9 +31,9 @@ def add_text_to_image(image, text):
 
     font = cv2.FONT_HERSHEY_SIMPLEX 
     org = (20, 400) 
-    fontScale = 1
+    fontScale = 0.7
     color = (255, 0, 0) 
-    thickness = 2
+    thickness = 1
     height, width, dim = image.shape
     number_of_characters = len(text)
 
@@ -41,7 +41,6 @@ def add_text_to_image(image, text):
     if number_of_characters<42:
        return cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA) 
     else:
-        
         number_of_sentences = math.ceil(number_of_characters/42)
         words_split = text.split()
         sentences = np.array_split(words_split, number_of_sentences)
@@ -82,57 +81,56 @@ class WorkPlaceScreening(object):
 
 
     def videoLoop(self):
-        # try:
-        while not self.stopEvent.is_set():
-            self.frame = self.vs.read()
-            #self.frame = resize(self.frame, width=800)
-
-            text = "STOP! We need to check your mask, temperature and symptoms before you enter."
-            restart = False
-            
-            while not restart:
-
+        try:
+            while not self.stopEvent.is_set():
                 self.frame = self.vs.read()
-                image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
-                image = add_text_to_image(image, text)
-                image = Image.fromarray(image)
-                image = ImageTk.PhotoImage(image)
+                self.frame = resize(self.frame, width=900)
 
-                if self.panel is None:
-                    self.panel = tki.Label(image=image)
-                    self.panel.image = image
-                    self.panel.pack(side="left", padx=10, pady=10)
-                else:
-                    self.panel.configure(image=image)
-                    self.panel.image = image
+                text = "STOP! We need to check your mask, temperature and symptoms before you enter."
+                restart = False
                 
-                frame = resize(self.frame, width=400)
-                FACE_RECOGNIZER.load_image_from_frame(frame)
-                number_of_faces = FACE_RECOGNIZER.detect_faces(probability=0.8, face_size=(160,160))
-                recognized_names = FACE_RECOGNIZER.recognize_faces(tolerance=0.35, verbose=False)
+                while not restart:
 
-                FACE_MASK_DETECTOR.load_image_from_frame(frame)
-                FACE_MASK_DETECTOR.detect_faces(probability=0.8, face_size=(224,224))
-                mask_detected = FACE_MASK_DETECTOR.detect_facemask()
-                recognized_names.append("Unkown")
+                    self.frame = self.vs.read()
+                    self.frame = resize(self.frame, width=900)
+                    image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
+                    image = add_text_to_image(image, text)
+                    image = Image.fromarray(image)
+                    image = ImageTk.PhotoImage(image)
 
-                if number_of_faces >= 1:
-                    if mask_detected:
-                        if recognized_names[0] != 'Unkown':
-                            text = f"Thanks for wearing your mask, {str(recognized_names[0]).capitalize()}. Going to take your temperature now."
-                        else:
-                            text = "Thanks for wearing your mask. Going to take your temperature now."
+                    if self.panel is None:
+                        self.panel = tki.Label(image=image)
+                        self.panel.image = image
+                        self.panel.pack(side="left", padx=1, pady=1)
                     else:
-                        if recognized_names[0] != 'Unkown':
-                            text = f"You are not allowed in without a mask {str(recognized_names[0]).capitalize()}. Please wear your mask"
+                        self.panel.configure(image=image)
+                        self.panel.image = image
+                    
+                    frame = resize(self.frame, width=400)
+                    FACE_RECOGNIZER.load_image_from_frame(frame)
+                    number_of_faces = FACE_RECOGNIZER.detect_faces(probability=0.8, face_size=(160,160))
+                    recognized_names = FACE_RECOGNIZER.recognize_faces(tolerance=0.35, verbose=False)
+
+                    FACE_MASK_DETECTOR.load_image_from_frame(frame)
+                    FACE_MASK_DETECTOR.detect_faces(probability=0.8, face_size=(224,224))
+                    mask_detected = FACE_MASK_DETECTOR.detect_facemask()
+                    recognized_names.append("Unkown")
+
+                    if number_of_faces >= 1:
+                        if mask_detected:
+                            if recognized_names[0] != 'Unkown':
+                                text = f"Thanks for wearing your mask, {str(recognized_names[0]).capitalize()}. Going to take your temperature now."
+                            else:
+                                text = "Thanks for wearing your mask. Going to take your temperature now."
                         else:
-                            text = "You are not allowed in without a mask. Please wear your mask."
-                else:
-                    text = "STOP! We need to check your mask, temperature and symptoms before you enter."
-
-
-        # except:
-        #     pass
+                            if recognized_names[0] != 'Unkown':
+                                text = f"You are not allowed in without a mask {str(recognized_names[0]).capitalize()}. Please wear your mask"
+                            else:
+                                text = "You are not allowed in without a mask. Please wear your mask."
+                    else:
+                        text = "STOP! We need to check your mask, temperature and symptoms before you enter."
+        except:
+            print("There was an error")
             
     def onClose(self):
         self.stopEvent.set()
@@ -143,5 +141,6 @@ class WorkPlaceScreening(object):
 vs = VideoStream(src=0).start()
 time.sleep(2.0)
 wps = WorkPlaceScreening(vs, './faces/')
+#wps.root.attributes("-fullscreen", True)
 wps.root.mainloop()
 
