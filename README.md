@@ -63,7 +63,7 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
 
 1. From the project folder:
 
-    python test.py -n workplace_screening/faces/ -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite --voice False --online False -l False
+        python test.py -n workplace_screening/faces/ -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite --voice False --online False -l False
     
 ## Create a livestream for face recognition
 
@@ -75,10 +75,16 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
     
 ## Take a snapshot and predict face mask and recognize face
 
-    python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l False --voice False --online False
+1. From the project folder:
+
+        python test.py -m ./workplace_screening/facemask_detection_model.tflite -f ./workplace_screening/encodings.pkl -e ./workplace_screening/face_embedding_model.tflite -t 0.35 --probability 0.7 --l False --voice False --online False
    
 ## Test voice regocnition 
+
+1. This will run five tests to see if the microphone picks up yes/no.
+
+1. From the project folder:
         
-    python test.py  --l False --voice True --online {False/True}
+        python test.py  --l False --voice True --online {False/True}
 
 If the `online` flag is set to `true`, it will use the _Google Cloud API_, otherwhise it will use _PocketSphinx_.
