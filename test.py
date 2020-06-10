@@ -58,6 +58,11 @@ parser.add_argument('-v',
                     nargs='?',
                     const = False,
                     help='If true, then print more information')
+parser.add_argument('--method',
+                    nargs='?',
+                    required=False,
+                    default='distance',
+                    help='If distance use cosine to recognize else if SVM use SVM model')
 
 args = vars(parser.parse_args())
 mask_detect_model = args['mask']
@@ -71,6 +76,7 @@ livestream = args['livestream']
 voice = args['voice']
 online = args['voice']
 verbose = args['verbose']
+method = args['method']
 
 if verbose == 'True':
     verbose = True
@@ -116,7 +122,7 @@ if __name__ == '__main__':
             print("Adding new face pictures")
             face_embedding.capture_frame_and_add_face(faces_folder=faces_folder, person_name=person_name, amount_of_examples=6)
         print("Embedding new face features")
-        face_embedding.encode_faces(image_path=faces_folder)
+        face_embedding.encode_faces(image_path=faces_folder, model=True)
 
 
     # ----------------- See if face is recognized -----------------
@@ -129,9 +135,10 @@ if __name__ == '__main__':
         print("Starting to recognize face")
         face_recognizer.start_video_stream()
         if livestream:
-            face_recognizer.capture_frame_and_recognize_faces_live(tolerance=0.35,verbose=verbose)
+            face_recognizer.capture_frame_and_recognize_faces_live(tolerance=tolerance,verbose=verbose, method = method)
         else:
-            face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability,verbose=verbose)
+            face_recognizer.capture_frame_and_recognize_faces(tolerance=tolerance, face_probability=face_probability,
+                                                              verbose=verbose, method = method)
             face_recognizer.display_predictions()
 
     # ----------------- Test a few phrases -----------------

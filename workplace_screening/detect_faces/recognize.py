@@ -5,8 +5,10 @@ import numpy as np
 import cv2
 import pickle
 import os
+from sklearn.svm import SVC
+from sklearn import preprocessing
+from joblib import load
 from scipy.spatial import distance
-
 
 class FaceIdentifier(ImageAndVideo):
     """
@@ -48,7 +50,7 @@ class FaceIdentifier(ImageAndVideo):
         self.input_details = self.embedding_model.get_input_details()
         self.output_details = self.embedding_model.get_output_details()   
 
-    def recognize_faces(self, tolerance=0.35, verbose = False):
+    def recognize_faces(self, tolerance=0.35, verbose = False, method = 'distance'):
         """
         This function recognizes the faces in a given image. In order to work, an
         image must first be loaded with either load_image_from_file or load_image_from_frame 
@@ -64,13 +66,17 @@ class FaceIdentifier(ImageAndVideo):
             verbose {boolean, default=False}:
                 If set to true, will print all the information regarding the 
                 recognition process.
+            method {str, default='distance'}:
+                Method used to predict the person. Default is distance
+                which implements cosine distance and measures. If 'SVM'
+                is specified, a SVM with a RBF kernel will be used to 
+                predict the person. Tolerance will then (1-Tolerance).
         """
         
         boxes = [(y,w,x,h) for (x, y, w, h) in self.bounding_boxes]
 
         encodings = []
         for i,face in enumerate(self.faces):
-
             self.embedding_model.set_tensor(self.input_details[0]['index'], face)
             self.embedding_model.invoke()
             predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])
@@ -82,61 +88,82 @@ class FaceIdentifier(ImageAndVideo):
             print('-'*100)
             print(f'Total faces to be matched against: {len(self.encoded_faces["encodings"])}')
 
-        for encoding in encodings:
-            encoding = encoding.reshape(1,-1)
-            similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
-            similarities = similarities/similarities.max()
-            matches = [distance[0] <= tolerance for distance in similarities]
-
-            if verbose:
-                print('Distance scores:')
-                print([f'{name}: {score}' for name,score in zip(self.encoded_faces["names"], similarities)])
-
-            if True in matches:
-
-                matchedIdxs = [i for (i, b) in enumerate(matches) if b]
-                sims = {}
-                counts = {}
-
-                for i in matchedIdxs:
-                    name = self.encoded_faces["names"][i]
-                    counts[name] = counts.get(name, 0) + 1
-                
-                name = max(counts, key=counts.get)
-
-                sims = {name:[] for name in np.unique(self.encoded_faces["names"])}
-
-                for i in matchedIdxs:
-                    similarity = similarities[i][0]
-                    name = self.encoded_faces["names"][i]
-                    sims[name].append(similarity)
+        if method == 'distance':
+            for encoding in encodings:
+                encoding = encoding.reshape(1,-1)
+                similarities = distance.cdist(self.encoded_faces["encodings"], encoding,'cosine')
+                similarities = similarities/similarities.max()
+                matches = [distance[0] <= tolerance for distance in similarities]
 
                 if verbose:
-                    print('Matched simalarities')
-                    print(sims)
+                    print('Distance scores:')
+                    print([f'{name}: {score}' for name,score in zip(self.encoded_faces["names"], similarities)])
 
-                average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=2}
+                if True in matches:
 
-                if verbose:
-                    print('Final scores')
-                    print(average_sim)
+                    matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+                    sims = {}
+                    counts = {}
 
-                try:
-                    name = min(average_sim, key=average_sim.get)
-                except:
-                    name = 'Unkown'
+                    for i in matchedIdxs:
+                        name = self.encoded_faces["names"][i]
+                        counts[name] = counts.get(name, 0) + 1
+                    
+                    name = max(counts, key=counts.get)
 
-            else:
-                name = 'Unkown' 
+                    sims = {name:[] for name in np.unique(self.encoded_faces["names"])}
 
-            self.recognized_faces.append(name)
+                    for i in matchedIdxs:
+                        similarity = similarities[i][0]
+                        name = self.encoded_faces["names"][i]
+                        sims[name].append(similarity)
+
+                    if verbose:
+                        print('Matched simalarities')
+                        print(sims)
+
+                    average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=2}
+
+                    if verbose:
+                        print('Final scores')
+                        print(average_sim)
+
+                    try:
+                        name = min(average_sim, key=average_sim.get)
+                    except:
+                        name = 'Unkown'
+
+                else:
+                    name = 'Unkown' 
+
+                self.recognized_faces.append(name)
+
+        elif method == 'model':
+
+            clf = load('face_recognizer.joblib') 
+            le = load('label_encoder.joblib')
+
+            try:
+                predictions = clf.predict_proba(encodings)
+                for prediction in predictions:
+                    if verbose:
+                        print(predictions)
+                    max_prob = max(prediction)
+                    if max_prob >= (tolerance):
+                        name = le.inverse_transform(np.argwhere(prediction==max_prob)[0])[0]
+                        self.recognized_faces.append(name)
+                    else:
+                        self.recognized_faces.append('Unkown')
+            except:
+                self.recognized_faces.append('Unkown')
+            
 
         self.colors = [(33, 33, 183) if name == "Unkown" else (0, 102, 0) for name in self.recognized_faces]
         self.labels = ['Unkown Person' if name == "Unkown" else  f'{name} identified' for name in self.recognized_faces]
 
         return self.recognized_faces
 
-    def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9, verbose=False):
+    def capture_frame_and_recognize_faces(self, tolerance=0.35, face_probability=0.9, verbose=False, method = 'distance'):
         """
         Capture the current frame of the video stream and recognize the 
         people in question.
@@ -150,6 +177,11 @@ class FaceIdentifier(ImageAndVideo):
             verbose {boolean, default=False}:
                 If set to true, will print all the information regarding the 
                 recognition process.
+            method {str, default='distance'}:
+                Method used to predict the person. Default is distance
+                which implements cosine distance and measures. If 'SVM'
+                is specified, a SVM with a RBF kernel will be used to 
+                predict the person. Tolerance will then (1-Tolerance).
         
         Returns:
             A list of names detected.
@@ -157,13 +189,13 @@ class FaceIdentifier(ImageAndVideo):
 
         self.capture_frame_and_load_image()
         self.detect_faces(probability=face_probability, face_size=(160,160))
-        self.recognize_faces(tolerance=tolerance, verbose=verbose)
+        self.recognize_faces(tolerance=tolerance, verbose=verbose, method = method)
         self.draw_boxes_around_faces()
  
 
         return self.recognized_faces
 
-    def capture_frame_and_recognize_faces_live(self, tolerance=0.35, face_probability=0.9, verbose=False):
+    def capture_frame_and_recognize_faces_live(self, tolerance=0.35, face_probability=0.9, verbose=False, method = 'distance'):
 
         """
         Start a video stream and and recognize the  people in question. To stop the video stream
@@ -178,6 +210,11 @@ class FaceIdentifier(ImageAndVideo):
             verbose {boolean, default=False}:
                 If set to true, will print all the information regarding the 
                 recognition process. 
+            method {str, default='distance'}:
+                Method used to predict the person. Default is distance
+                which implements cosine distance and measures. If 'SVM'
+                is specified, a SVM with a RBF kernel will be used to 
+                predict the person. Tolerance will then (1-Tolerance).
         """
 
         while True:
@@ -188,7 +225,7 @@ class FaceIdentifier(ImageAndVideo):
 
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability, face_size=(160,160))
-            self.recognize_faces(tolerance=tolerance, verbose=verbose)
+            self.recognize_faces(tolerance=tolerance, verbose=verbose, method = method)
             self.draw_boxes_around_faces()
 
             key = cv2.waitKey(1) & 0xFF

@@ -7,6 +7,11 @@ import cv2
 import os
 import numpy as np
 import time
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import VotingClassifier, RandomForestClassifier
+from sklearn import preprocessing
+from joblib import dump
 
 class FaceIdentifyDataCreation(ImageAndVideo):
     """
@@ -95,7 +100,7 @@ class FaceIdentifyDataCreation(ImageAndVideo):
         self.vs.stop()
 
 
-    def encode_faces(self, image_path):
+    def encode_faces(self, image_path, model=True):
 
         """
         Read all of the images within a specified image path and create embedding for all 
@@ -106,6 +111,7 @@ class FaceIdentifyDataCreation(ImageAndVideo):
             image_path {str}:      
                 Path to the folder containing the various 
                 folders containing the face images.
+
         """
 
         print("encoding faces")
@@ -136,3 +142,38 @@ class FaceIdentifyDataCreation(ImageAndVideo):
         
         with open(self.encodings_location, "wb") as f:
             f.write(pickle.dumps(self.encoded_faces))
+        
+        if model == True:
+
+            print("Training model")
+            x = np.array(self.encoded_faces['encodings'])
+            y = np.array(self.encoded_faces['names'])
+
+            #create integer labels
+            le = preprocessing.LabelEncoder()
+            le.fit(y)
+            y_encoded = le.transform(y)
+
+            # train voting model
+            svm = SVC(C= 10, gamma=0.001, kernel='rbf', probability=True)
+            knn = KNeighborsClassifier(n_neighbors=4, weights = 'distance')
+            rf = RandomForestClassifier(bootstrap=True, ccp_alpha=0.0, class_weight=None,
+                            criterion='gini', max_depth=100, max_features='auto',
+                            max_leaf_nodes=None, max_samples=None,
+                            min_impurity_decrease=0.0, min_impurity_split=None,
+                            min_samples_leaf=1, min_samples_split=2,
+                            min_weight_fraction_leaf=0.0, n_estimators=800,
+                            n_jobs=None, oob_score=False, random_state=42,
+                            verbose=0, warm_start=False)
+                            
+            clf = VotingClassifier(estimators=[('rf', rf), ('knn', knn), ('svm', svm)],
+                         voting='soft',
+                         weights = (1,1,2))
+            clf.fit(x, y)
+
+            # save encoder and model
+            dump(le, 'label_encoder.joblib')
+            dump(clf, 'face_recognizer.joblib') 
+            print("Done training model")
+
+        
