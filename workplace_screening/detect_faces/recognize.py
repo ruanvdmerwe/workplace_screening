@@ -50,6 +50,9 @@ class FaceIdentifier(ImageAndVideo):
         self.input_details = self.embedding_model.get_input_details()
         self.output_details = self.embedding_model.get_output_details()   
 
+        self.clf = load('face_recognizer.joblib') 
+        self.le = load('label_encoder.joblib')
+
     def recognize_faces(self, tolerance=0.35, verbose = False, method = 'distance'):
         """
         This function recognizes the faces in a given image. In order to work, an
@@ -140,17 +143,14 @@ class FaceIdentifier(ImageAndVideo):
 
         elif method == 'model':
 
-            clf = load('face_recognizer.joblib') 
-            le = load('label_encoder.joblib')
-
             try:
-                predictions = clf.predict_proba(encodings)
+                predictions = self.clf.predict_proba(encodings)
                 for prediction in predictions:
                     if verbose:
                         print(predictions)
                     max_prob = max(prediction)
                     if max_prob >= (tolerance):
-                        name = le.inverse_transform(np.argwhere(prediction==max_prob)[0])[0]
+                        name = self.le.inverse_transform(np.argwhere(prediction==max_prob)[0])[0]
                         self.recognized_faces.append(name)
                     else:
                         self.recognized_faces.append('Unkown')
