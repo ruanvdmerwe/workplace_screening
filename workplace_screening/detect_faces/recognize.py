@@ -189,7 +189,6 @@ class FaceIdentifier(ImageAndVideo):
             self.load_image_from_frame(frame)
             self.detect_faces(probability=face_probability, face_size=(160,160))
             self.recognize_faces(tolerance=tolerance, verbose=verbose)
-            self.image = cv2.flip(self.image, 1)
             self.draw_boxes_around_faces()
 
             key = cv2.waitKey(1) & 0xFF
