@@ -31,6 +31,7 @@ class WorkPlaceScreening(object):
         self.face_recognizer = FaceIdentifier(encodings_location='./workplace_screening/encodings.pkl',
                                               embeding_model_location='./workplace_screening/face_embedding_model.tflite')
         self.speech_to_text = SpeechToText()
+        self.sequence_count = 0
         self.start_time = datetime.now().replace(microsecond=0)  # ignore microseconds for the sake of brevity
         print(f"STARTING UP\n{self.start_time.isoformat(' ')")
         print("---------------------------------\n")
@@ -65,7 +66,8 @@ class WorkPlaceScreening(object):
             self.face_mask_detector.load_image_from_frame(self.frame)
             number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
             time.sleep(0.25)
-        print("face detected")
+        self.sequence_count += 1
+        print(f"face detected... starting sequence #{self.sequence_count}")
         self.start_time = datetime.now().replace(microsecond=0)
  
         self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
