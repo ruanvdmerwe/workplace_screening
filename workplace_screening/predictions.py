@@ -37,7 +37,7 @@ class WorkPlaceScreening(object):
             self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
             self.wearing_mask()
         else:
-            self.start()
+            self.fail()
         
     def wearing_mask(self):
         self.face_mask_detector.load_image_from_frame(self.frame)
@@ -97,7 +97,6 @@ class WorkPlaceScreening(object):
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON’T touch the surface of the box'
         self.save_text_to_file(text)
-
         time.sleep(2)
         text = f'{temperature} degrees. Thank you.'
         if temperature > 38:
@@ -111,6 +110,7 @@ class WorkPlaceScreening(object):
         else:
             text = f'Your temperature was {temperature} degrees.'
             self.save_text_to_file(text) 
+            time.sleep(2)
             self.question1()
 
     def question1(self):
