@@ -35,7 +35,8 @@ class WorkPlaceScreening(object):
         self.save_text_to_file(message)
         console.log(f"\nscreening sequence failed for reason: \n{reason}\nmessage: {message}\n")
         time.sleep(5)
-        self.start()
+        # restart the sequence
+        self.wait_for_face()
 
     def button_pressed_callback(self, channel):
         self.fail("foot-pedal-interrupt")
@@ -49,7 +50,7 @@ class WorkPlaceScreening(object):
             with open('./workplace_screening/frame.pkl', 'rb') as myfile: 
                 self.frame = pickle.load(myfile)
 
-    def start(self):
+    def wait_for_face(self):
         self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
         
         # keep looping unitl a face is detected
@@ -61,9 +62,9 @@ class WorkPlaceScreening(object):
             time.sleep(0.25)
  
         self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
-        self.wearing_mask()
+        self.check_for_mask()
         
-    def wearing_mask(self):
+    def check_for_mask(self):
         self.face_mask_detector.load_image_from_frame(self.frame)
         number_of_faces =  self.face_mask_detector.detect_faces(probability=0.8, face_size=(224,224))
         wearing_facemask =  self.face_mask_detector.detect_facemask(mask_probability=0.97, verbose=True)
@@ -74,7 +75,7 @@ class WorkPlaceScreening(object):
         else:
             self.save_text_to_file("You are not allowed in without a mask. Please wear your mask.")
             time.sleep(4)
-            self.start()
+            self.wait_for_face()
     
     def recognize_person(self):
         
@@ -87,7 +88,7 @@ class WorkPlaceScreening(object):
                 self.load_image()
                 self.face_recognizer.load_image_from_frame(self.frame)
                 number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160,160))
-                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=True, method = 'distance')
+                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=False, method = 'distance')
                 recognized_names.append('Unkown')
                 names.append(recognized_names[0])
             except:
@@ -95,7 +96,7 @@ class WorkPlaceScreening(object):
                 self.load_image()
                 self.face_recognizer.load_image_from_frame(self.frame)
                 number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160,160))
-                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=True, method = 'distance')
+                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=False, method = 'distance')
                 recognized_names.append('Unkown')
                 names.append(recognized_names[0])
         
@@ -108,17 +109,17 @@ class WorkPlaceScreening(object):
                 self.recognized_name = person
                 self.save_text_to_file(f"Thanks for wearing your mask, {str(self.recognized_name).capitalize()}. Going to take your temperature now.")
                 time.sleep(2)
-                self.temperature_measure()
+                self.measure_temperature()
             else:
                 self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
                 time.sleep(2)
                 self.recognized_name = 'Unkown'
-                self.temperature_measure()
+                self.measure_temperature()
         else:
-            self.wearing_mask()
+            self.check_for_mask()
 
     
-    def temperature_measure(self):
+    def measure_temperature(self):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
@@ -169,9 +170,9 @@ class WorkPlaceScreening(object):
         else:
             text = f'Your temperature was {temperature} degrees.'
             self.save_text_to_file(text)
-            self.question1()
+            self.question_1()
 
-    def question1(self):
+    def question_1(self):
         self.speech_to_text.fine_tune(duration=3)
         self.save_text_to_file("Do you have any of the following: a persistent cough? difficulty breathing? a sore throat? Wait for the instruction to say your answer.")
         time.sleep(5)
@@ -184,15 +185,15 @@ class WorkPlaceScreening(object):
             time.sleep(5)
             self.fail("question-1-symptoms", text)
         elif answer == 'no':
-            self.question2()
+            self.question_2()
         else:
             # try again
             text = f'Sorry, but we could not understand you. You need to speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
-            self.question1()
+            self.question_1()
 
-    def question2(self):
+    def question_2(self):
         self.speech_to_text.fine_tune(duration=2)
         self.save_text_to_file("Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks? Wait for the instruction to say your answer.")
         time.sleep(5)
@@ -212,19 +213,19 @@ class WorkPlaceScreening(object):
             text = f'Sorry, but we could not understand you. Please speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
-            self.question2()
+            self.question_2()
 
     def passed(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         time.sleep(15)
-        self.start()
+        self.wait_for_face()
         # TODO: prompt for phone number
 
     # def passed_unkown(self):
     #     self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
     #     self.ringbell()
     #     time.sleep(2)
-    #     self.start()
+    #     self.wait_for_face()
 
     # def ringbell(self):
     #     pass
@@ -265,6 +266,6 @@ if __name__ == "__main__":
             callback=controller.button_pressed_callback, bouncetime=500)
 
 
-    controller.start()
+    controller.wait_for_face()
 
     
