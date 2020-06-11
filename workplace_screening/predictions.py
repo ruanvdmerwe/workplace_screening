@@ -62,7 +62,7 @@ class WorkPlaceScreening(object):
     def wearing_mask(self):
         self.face_mask_detector.load_image_from_frame(self.frame)
         number_of_faces =  self.face_mask_detector.detect_faces(probability=0.8, face_size=(224,224))
-        wearing_facemask =  self.face_mask_detector.detect_facemask()
+        wearing_facemask =  self.face_mask_detector.detect_facemask(mask_probability=0.97, verbose=True)
 
         print(f'Wearing facemask: {wearing_facemask}')
         if number_of_faces>=1 and wearing_facemask:
@@ -150,7 +150,7 @@ class WorkPlaceScreening(object):
                 count += 1
 
             if temperature is None:
-                print("couldn't read temperature")
+                print("Couldn't read temperature. Please try again")
                 self.fail()
         else:
             time.sleep(4)
@@ -270,9 +270,12 @@ if __name__ == "__main__":
 
     # initialize new state machine instance
     controller = WorkPlaceScreening()
-    controller.start()
 
     # reset state from foot pedal
     GPIO.add_event_detect(BUTTON_GPIO, GPIO.FALLING,
             callback=controller.button_pressed_callback, bouncetime=500)
+
+
+    controller.start()
+
     
