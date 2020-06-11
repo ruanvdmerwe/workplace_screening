@@ -31,13 +31,14 @@ class WorkPlaceScreening(object):
                                               embeding_model_location='./workplace_screening/face_embedding_model.tflite')
         self.speech_to_text = SpeechToText()
 
-    def fail(self):
+    def fail(self, reason="unspecified", message="Restarting sequence..."):
+        self.save_text_to_file(message)
+        console.log(f"\nscreening sequence failed for reason: \n{reason}\nmessage: {message}\n")
         time.sleep(5)
         self.start()
 
     def button_pressed_callback(self, channel):
-        print("Foot pedal callback triggered!")
-        self.fail()
+        self.fail("foot-pedal-interrupt")
 
     def load_image(self):
         try:
@@ -50,14 +51,17 @@ class WorkPlaceScreening(object):
 
     def start(self):
         self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
-        self.load_image()
-        self.face_mask_detector.load_image_from_frame(self.frame)
-        number_of_faces =  self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
-        if number_of_faces>=1:
-            self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
-            self.wearing_mask()
-        else:
-            self.fail()
+        
+        # keep looping unitl a face is detected
+        number_of_faces = 0
+        while number_of_faces == 0:
+            self.load_image()
+            self.face_mask_detector.load_image_from_frame(self.frame)
+            number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
+            time.sleep(0.25)
+ 
+        self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
+        self.wearing_mask()
         
     def wearing_mask(self):
         self.face_mask_detector.load_image_from_frame(self.frame)
@@ -130,7 +134,7 @@ class WorkPlaceScreening(object):
                 ser.flush()
             except ConnectionError:
                 print(f"Cannot connect to Serial {SERIAL_PORT}")
-                self.fail()
+                self.fail("serial-port-error", "There was an error connecting to the temperature sensor. Please try again.")
 
             # try reading temperature
             count = 0
@@ -151,9 +155,9 @@ class WorkPlaceScreening(object):
                 count += 1
 
             if temperature is None:
-                print("Couldn't read temperature. Please try again")
-                self.fail()
+                self.fail("temperature-reading-timeout", "Couldn't read temperature. Please try again")
         else:
+            # this is only called in DEV
             time.sleep(4)
 
         text = f'{temperature} degrees. Thank you.'
@@ -161,102 +165,86 @@ class WorkPlaceScreening(object):
             text = f'You are not allowed in because your temperature ({temperature}) is over 38 degrees. You might have a fever.'
             self.save_text_to_file(text) 
             time.sleep(4)
-            text = f'We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe.'
-            self.save_text_to_file(text) 
-            time.sleep(5)
-            self.fail()
+            self.fail("temperature-too-high", "We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe.")
         else:
             text = f'Your temperature was {temperature} degrees.'
-            self.save_text_to_file(text) 
-            #time.sleep(5)
-            self.speech_to_text.fine_tune(duration=3)
+            self.save_text_to_file(text)
             self.question1()
 
     def question1(self):
-        #self.save_text_to_file("Answer YES or NO")
-        #self.speech_to_text.fine_tune(duration=3)
-        self.save_text_to_file("""Do you have any of the following: a persistent cough? difficulty breathing? a sore throat? Wait for the instruction to say your answer.""")
+        self.speech_to_text.fine_tune(duration=3)
+        self.save_text_to_file("Do you have any of the following: a persistent cough? difficulty breathing? a sore throat? Wait for the instruction to say your answer.")
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for response") 
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        print(f'Answer of question was: {answer}')
+        print(f'Question 1 answer: {answer}')
         if answer == 'yes':
-            #text = f'You are not allowed in because you might have covid-19 symptoms.'
-            #self.save_text_to_file(text) 
-            #time.sleep(2)
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
             self.save_text_to_file(text) 
             time.sleep(5)
-            self.fail()
+            self.fail("question-1-symptoms", text)
         elif answer == 'no':
-            #self.question2()
-            self.speech_to_text.fine_tune(duration=2)
             self.question2()
         else:
+            # try again
             text = f'Sorry, but we could not understand you. You need to speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
             self.question1()
 
     def question2(self):
-        #self.save_text_to_file("Answer YES or NO")
-        #self.speech_to_text.fine_tune(duration=2)
+        self.speech_to_text.fine_tune(duration=2)
         self.save_text_to_file("Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks? Wait for the instruction to say your answer.")
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for the response")
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        print(f'Answer of question was: {answer}')
+        print(f'Question 2 answer: {answer}')
 
         if answer == 'yes':
-            #text = f'You are not allowed in because you might have covid-19 symptoms.'
-            #self.save_text_to_file(text) 
-            #time.sleep(2)
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
-            time.sleep(5)
             self.save_text_to_file(text) 
-            self.fail()
+            time.sleep(5)
+            self.fail("question-2-contact", text)
         elif answer == 'no':
             self.passed()
         else:
+            # try again
             text = f'Sorry, but we could not understand you. Please speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
             self.question2()
 
     def passed(self):
-        #if self.recognized_name != 'Unkown':
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         time.sleep(15)
         self.start()
-        #else:
-         #   time.sleep(2)
-         #  self.get_phone_number()
+        # TODO: prompt for phone number
 
-    def passed_unkown(self):
-        self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
-        self.ringbell()
-        time.sleep(2)
-        self.start()
+    # def passed_unkown(self):
+    #     self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
+    #     self.ringbell()
+    #     time.sleep(2)
+    #     self.start()
 
-    def ringbell(self):
-        pass
+    # def ringbell(self):
+    #     pass
 
-    def get_phone_number(self):
-        self.speech_to_text.fine_tune(duration=3)
-        self.save_text_to_file("Please say your contact number in Plain English.")
-        time.sleep(0.2)
-        phone_number = self.speech_to_text.listen_and_predict(online=False)
+    # def get_phone_number(self):
+    #     self.speech_to_text.fine_tune(duration=3)
+    #     self.save_text_to_file("Please say your contact number in Plain English.")
+    #     time.sleep(0.2)
+    #     phone_number = self.speech_to_text.listen_and_predict(online=False)
 
-        self.speech_to_text.fine_tune(duration=2)
-        self.save_text_to_file("Answer YES or NO")
-        time.sleep(2)
-        self.save_text_to_file(f"Is this your contact number? {phone_number}")
-        answer = self.speech_to_text.listen_and_predict(online=False)
+    #     self.speech_to_text.fine_tune(duration=2)
+    #     self.save_text_to_file("Answer YES or NO")
+    #     time.sleep(2)
+    #     self.save_text_to_file(f"Is this your contact number? {phone_number}")
+    #     answer = self.speech_to_text.listen_and_predict(online=False)
 
-        if answer == 'yes':
-            self.passed_unkown()
-        else:
-           self.get_phone_number()
+    #     if answer == 'yes':
+    #         self.passed_unkown()
+    #     else:
+    #        self.get_phone_number()
 
 
     def save_text_to_file(self, text):
