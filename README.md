@@ -1,3 +1,17 @@
+# Using this code
+
+To run the GUI that streams vido and text to the screen for the user:
+
+        cd workplace_screening_dev
+        virtualenv env -p python3
+        python workplace_screening/gui.py
+
+Then, in a separate terminal:
+
+        virtualenv env -p python3
+        python workplace_screening/predictions.py
+
+
 # Setup
 
 1. Clone github reporisoty and change to the project folder
