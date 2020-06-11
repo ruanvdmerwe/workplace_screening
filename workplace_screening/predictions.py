@@ -118,7 +118,7 @@ class WorkPlaceScreening(object):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
-        # temperature = 38.2  
+        # temperature = 36.3
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
@@ -152,6 +152,8 @@ class WorkPlaceScreening(object):
             if temperature is None:
                 print("couldn't read temperature")
                 self.fail()
+        else:
+            time.sleep(4)
 
         text = f'{temperature} degrees. Thank you.'
         if temperature > 38:
@@ -223,7 +225,7 @@ class WorkPlaceScreening(object):
     def passed(self):
         #if self.recognized_name != 'Unkown':
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
-        time.sleep(5)
+        time.sleep(15)
         self.start()
         #else:
          #   time.sleep(2)
