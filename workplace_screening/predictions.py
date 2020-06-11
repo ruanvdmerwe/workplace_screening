@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+import sys
+
+# uncomment for local development:
+# # Replace RPi library with a mock (if you're rnot running on a Pi)
+# import fake_rpi
+# sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+# sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+
+import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
 from detect_faces.recognize import FaceIdentifier
 from voice_recognition.voice_recognition import SpeechToText
@@ -6,6 +16,12 @@ from imutils.video import VideoStream
 import pickle
 import time
 from collections import Counter
+import serial
+
+BUTTON_GPIO = 16
+SERIAL_PORT = "/dev/serial0"
+BAUD_RATE = 57600
+
 
 class WorkPlaceScreening(object):
 
@@ -16,8 +32,12 @@ class WorkPlaceScreening(object):
         self.speech_to_text = SpeechToText()
 
     def fail(self):
-        time.sleep(10)
+        time.sleep(5)
         self.start()
+
+    def button_pressed_callback(self, channel):
+        print("Foot pedal callback triggered!")
+        self.fail()
 
     def load_image(self):
         try:
@@ -95,11 +115,46 @@ class WorkPlaceScreening(object):
 
     
     def temperature_measure(self):
-        temperature = 38.2
+
+        temperature = None
+        # uncomment the next line to skip temperature reading (e.g. for developing locally)
+        # temperature = 36.3
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
-        time.sleep(4)
+        
+        if temperature is None:
+            # connect to serial port
+            try:
+                ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+                ser.flush()
+            except ConnectionError:
+                print(f"Cannot connect to Serial {SERIAL_PORT}")
+                self.fail()
+
+            # try reading temperature
+            count = 0
+            sleep_interval = 0.2 
+            seconds_to_keep_trying = 30  # fail if we couldn't read a temperature on the serial port after this time
+            while count < seconds_to_keep_trying / sleep_interval:
+                data_left = ser.inWaiting()  #check for remaining byte
+                input = ser.read(data_left)
+                print(f"serial input: {input}")
+                try:
+                    temperature = float(input)
+                    break
+                except Exception:
+                    # We saw something, but it wasn't a float, so keep going
+                    pass
+                time.sleep(0.2)
+                count += 1
+
+            if temperature is None:
+                print("couldn't read temperature")
+                self.fail()
+        else:
+            time.sleep(4)
+
         text = f'{temperature} degrees. Thank you.'
         if temperature > 38:
             text = f'You are not allowed in because your temperature ({temperature}) is over 38 degrees. You might have a fever.'
@@ -170,7 +225,7 @@ class WorkPlaceScreening(object):
     def passed(self):
         #if self.recognized_name != 'Unkown':
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
-        time.sleep(5)
+        time.sleep(15)
         self.start()
         #else:
          #   time.sleep(2)
@@ -207,10 +262,17 @@ class WorkPlaceScreening(object):
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 
-work_place_screening = WorkPlaceScreening()
-# try:
-work_place_screening.start()
-# except:
-#     work_place_screening.save_text_to_file("Unforseen error. Starting over")
-#     time.sleep(2)
-#     work_place_screening.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
+
+if __name__ == "__main__":
+    # setup GPIO for foot pedal
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    # initialize new state machine instance
+    controller = WorkPlaceScreening()
+    controller.start()
+
+    # reset state from foot pedal
+    GPIO.add_event_detect(BUTTON_GPIO, GPIO.FALLING,
+            callback=controller.button_pressed_callback, bouncetime=500)
+    
