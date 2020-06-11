@@ -18,6 +18,7 @@ import time
 from collections import Counter
 import serial
 
+BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
 BAUD_RATE = 57600
 
