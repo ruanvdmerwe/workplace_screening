@@ -72,7 +72,7 @@ class SpeechToText(object):
             A string value indicating either yes, no or unkown.
         """
         
-        with sr.Microphone() as source:
+        with sr.Microphone(sample_rate=48000) as source:
             audio = self.recorder.listen(source) 
 
         # recognize speech using Sphinx
