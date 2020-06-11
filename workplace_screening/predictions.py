@@ -2,10 +2,10 @@
 import sys
 
 # uncomment for local development:
-# # Replace RPi library with a mock (if you're rnot running on a Pi)
-# import fake_rpi
-# sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
-# sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+# Replace RPi library with a mock (if you're rnot running on a Pi)
+import fake_rpi
+sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
 
 import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
@@ -18,6 +18,7 @@ import time
 from collections import Counter
 import serial
 from datetime import datetime
+from pathlib import Path
 
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
@@ -33,12 +34,22 @@ class WorkPlaceScreening(object):
         self.speech_to_text = SpeechToText()
         self.sequence_count = 0
         self.start_time = datetime.now().replace(microsecond=0)  # ignore microseconds for the sake of brevity
-        print(f"STARTING UP\n{self.start_time.isoformat(' ')")
+        # start a new log file
+        self.log_file_name = f"log_{self.start_time.isoformat('-')}.txt"
+        Path(self.log_file_name).touch()
+        print(f"STARTING UP\n{self.start_time.isoformat(' ')}")
         print("---------------------------------\n")
+
+    def log(self, text):
+        # print to console
+        print(text)
+        # print to log file
+        with open(self.log_file_name, "a") as log_file:
+            print(text, file=log_file)
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
-        print(f"\nscreening sequence failed for reason: \n{reason}\n")
+        self.log(f"\nscreening sequence failed for reason: \n{reason}\n")
         time.sleep(5)
         # restart the sequence
         self.wait_for_face()
@@ -56,7 +67,7 @@ class WorkPlaceScreening(object):
                 self.frame = pickle.load(myfile)
 
     def wait_for_face(self):
-        print("starting new sequence: waiting for a face...")
+        self.log("starting new sequence: waiting for a face...")
         self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
         
         # keep looping unitl a face is detected
@@ -67,7 +78,7 @@ class WorkPlaceScreening(object):
             number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
             time.sleep(0.25)
         self.sequence_count += 1
-        print(f"face detected... starting sequence #{self.sequence_count}")
+        self.log(f"FACE DETECTED... starting sequence #{self.sequence_count}")
         self.start_time = datetime.now().replace(microsecond=0)
  
         self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
@@ -78,7 +89,7 @@ class WorkPlaceScreening(object):
         number_of_faces =  self.face_mask_detector.detect_faces(probability=0.8, face_size=(224,224))
         wearing_facemask =  self.face_mask_detector.detect_facemask(mask_probability=0.97, verbose=True)
 
-        print(f'Wearing facemask: {wearing_facemask}')
+        self.log(f'Wearing facemask: {wearing_facemask}')
         if number_of_faces>=1 and wearing_facemask:
             self.recognize_person()
         else:
@@ -112,7 +123,7 @@ class WorkPlaceScreening(object):
         name = Counter(names)
         person = name.most_common(1)[0][0]
 
-        print(f'Recognized {person}')
+        self.log(f'Recognized {person}')
         if number_of_faces>=1:
             if person != 'Unkown':
                 self.recognized_name = person
@@ -132,7 +143,7 @@ class WorkPlaceScreening(object):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
-        # temperature = 36.3
+        temperature = 36.3
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
@@ -143,7 +154,7 @@ class WorkPlaceScreening(object):
                 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
                 ser.flush()
             except ConnectionError:
-                print(f"Cannot connect to Serial {SERIAL_PORT}")
+                self.log(f"Cannot connect to Serial {SERIAL_PORT}")
                 self.fail("serial-port-error", "There was an error connecting to the temperature sensor. Please try again.")
 
             # try reading temperature
@@ -154,7 +165,7 @@ class WorkPlaceScreening(object):
                 data_left = ser.inWaiting()  # check for remaining bytes
                 input = ser.read(data_left)
                 if input:
-                    print(f"serial input: {input}")
+                    self.log(f"serial input: {input}")
                     try:
                         temperature = float(input)
                         break
@@ -187,7 +198,7 @@ class WorkPlaceScreening(object):
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for response") 
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        print(f'Question 1 answer: {answer}')
+        self.log(f'Question 1 answer: {answer}')
         if answer == 'yes':
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
             self.save_text_to_file(text) 
@@ -208,7 +219,7 @@ class WorkPlaceScreening(object):
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for the response")
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        print(f'Question 2 answer: {answer}')
+        self.log(f'Question 2 answer: {answer}')
 
         if answer == 'yes':
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
@@ -227,7 +238,7 @@ class WorkPlaceScreening(object):
     def passed(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         duration = datetime.now().replace(microsecond=0) - self.start_time
-        print(f"success: screening passed (duration {duration})\n")
+        self.log(f"success: screening passed (duration {duration})\n")
         time.sleep(15)
         self.wait_for_face()
         # TODO: prompt for phone number
@@ -260,7 +271,7 @@ class WorkPlaceScreening(object):
 
 
     def save_text_to_file(self, text):
-        print(f"\n -> {text}\n")
+        self.log(f"\n -> {text}\n")
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 
