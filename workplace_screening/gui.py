@@ -79,13 +79,15 @@ class WorkPlaceScreening(object):
             frame_counter = 0
             text = "STOP! We need to check your mask, temperature and symptoms before you enter."
 
-            try:
-                with open ('./workplace_screening/state.pkl', 'rb') as myfile:  
-                    text = pickle.load(myfile)
-            except:
-                pass
+
 
             while not self.stopEvent.is_set():
+
+                try:
+                    with open ('./workplace_screening/state.pkl', 'rb') as myfile:  
+                        text = pickle.load(myfile)
+                except:
+                    pass
                 
                 if frame_counter == 5:
                     try:
@@ -95,8 +97,6 @@ class WorkPlaceScreening(object):
                         pass
                      
                     frame_counter = 0
-
-
                     
                 self.frame = self.vs.read()
                 self.frame = resize(self.frame, width=600)
