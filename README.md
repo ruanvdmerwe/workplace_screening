@@ -37,17 +37,17 @@ But make sure that you've got a trained model locally. If there are images in th
 
     1. In the project folder, create a new Python environement:
 
-        cd workplace_screening_dev
-        virtualenv env -p python3
-        source env/bin/activate
+            cd workplace_screening_dev
+            virtualenv env -p python3
+            source env/bin/activate
 
     4. install RPi.GPIO package (only works when running on a raspberry pi)
             
-        pip install RPi.GPIO
+            pip install RPi.GPIO
 
     5. Now, install the other required packages:
 
-        pip install -r requirements.txt
+            pip install -r requirements.txt
 
 
 1. If on a Mac
@@ -67,17 +67,17 @@ But make sure that you've got a trained model locally. If there are images in th
 
     1. In the project folder, create a new Python environement:
 
-        cd workplace_screening_dev
-        virtualenv env -p python3
-        source env/bin/activate
+            cd workplace_screening_dev
+            virtualenv env -p python3
+            source env/bin/activate
 
     4. install a mock RPi.GPIO package, so the code doesn't crash when running on a mac
             
-        pip install fake_rpi
+            pip install fake_rpi
 
     5. Now, install the other required packages:
 
-        pip install -r requirements.txt
+            pip install -r requirements.txt
 
 
 Now, you have a clean Python 3 environment, with no packages installed. To install the required packages:
