@@ -17,6 +17,7 @@ import pickle
 import time
 from collections import Counter
 import serial
+from datetime import datetime
 
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
@@ -30,6 +31,9 @@ class WorkPlaceScreening(object):
         self.face_recognizer = FaceIdentifier(encodings_location='./workplace_screening/encodings.pkl',
                                               embeding_model_location='./workplace_screening/face_embedding_model.tflite')
         self.speech_to_text = SpeechToText()
+        self.start_time = datetime.now().replace(microsecond=0)  # ignore microseconds for the sake of brevity
+        print(f"STARTING UP\n{self.start_time.isoformat(' ')")
+        print("---------------------------------\n")
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
@@ -61,6 +65,8 @@ class WorkPlaceScreening(object):
             self.face_mask_detector.load_image_from_frame(self.frame)
             number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
             time.sleep(0.25)
+        print("face detected")
+        self.start_time = datetime.now().replace(microsecond=0)
  
         self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
         self.check_for_mask()
@@ -218,7 +224,8 @@ class WorkPlaceScreening(object):
 
     def passed(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
-        print("success: screening passed\n")
+        duration = datetime.now().replace(microsecond=0) - self.start_time
+        print(f"success: screening passed (duration {duration})\n")
         time.sleep(15)
         self.wait_for_face()
         # TODO: prompt for phone number
@@ -251,7 +258,7 @@ class WorkPlaceScreening(object):
 
 
     def save_text_to_file(self, text):
-        print(f" -> {text}")
+        print(f"\n -> {text}\n")
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 
