@@ -33,7 +33,7 @@ class WorkPlaceScreening(object):
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
-        console.log(f"\nscreening sequence failed for reason: \n{reason}\nmessage: {message}\n")
+        print(f"\nscreening sequence failed for reason: \n{reason}\n")
         time.sleep(5)
         # restart the sequence
         self.wait_for_face()
@@ -51,6 +51,7 @@ class WorkPlaceScreening(object):
                 self.frame = pickle.load(myfile)
 
     def wait_for_face(self):
+        print("starting new sequence: waiting for a face...")
         self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
         
         # keep looping unitl a face is detected
@@ -217,6 +218,7 @@ class WorkPlaceScreening(object):
 
     def passed(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
+        print("success: screening passed\n")
         time.sleep(15)
         self.wait_for_face()
         # TODO: prompt for phone number
@@ -249,6 +251,7 @@ class WorkPlaceScreening(object):
 
 
     def save_text_to_file(self, text):
+        print(f" -> {text}")
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 
@@ -265,7 +268,4 @@ if __name__ == "__main__":
     GPIO.add_event_detect(BUTTON_GPIO, GPIO.FALLING,
             callback=controller.button_pressed_callback, bouncetime=500)
 
-
     controller.wait_for_face()
-
-    
