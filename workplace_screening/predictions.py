@@ -1,6 +1,6 @@
-from .detect_facemask.detect_facemask import FaceMaskDetector
-from .detect_faces.recognize import FaceIdentifier
-from .voice_recognition.voice_recognition import SpeechToText
+from detect_facemask.detect_facemask import FaceMaskDetector
+from detect_faces.recognize import FaceIdentifier
+from voice_recognition.voice_recognition import SpeechToText
 from imutils import resize
 from imutils.video import VideoStream
 import pickle

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from ..core.core import ImageAndVideo
+from core.core import ImageAndVideo
 from imutils import resize
 import cv2
 
