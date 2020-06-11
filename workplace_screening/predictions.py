@@ -16,7 +16,7 @@ class WorkPlaceScreening(object):
         self.speech_to_text = SpeechToText()
 
     def fail(self):
-        time.sleep(3)
+        time.sleep(10)
         self.start()
 
     def load_image(self):
@@ -54,6 +54,8 @@ class WorkPlaceScreening(object):
     
     def recognize_person(self):
         
+        time.sleep(0.5)
+        self.save_text_to_file("Trying to recognise you.")
         names = []
         for i in range(10):
             try:
@@ -61,7 +63,7 @@ class WorkPlaceScreening(object):
                 self.load_image()
                 self.face_recognizer.load_image_from_frame(self.frame)
                 number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160,160))
-                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.35, verbose=True, method = 'distance')
+                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=True, method = 'distance')
                 recognized_names.append('Unkown')
                 names.append(recognized_names[0])
             except:
@@ -69,7 +71,7 @@ class WorkPlaceScreening(object):
                 self.load_image()
                 self.face_recognizer.load_image_from_frame(self.frame)
                 number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160,160))
-                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.35, verbose=True, method = 'distance')
+                recognized_names = self.face_recognizer.recognize_faces(tolerance=0.41, verbose=True, method = 'distance')
                 recognized_names.append('Unkown')
                 names.append(recognized_names[0])
         
@@ -93,79 +95,86 @@ class WorkPlaceScreening(object):
 
     
     def temperature_measure(self):
-        temperature = 37.5
+        temperature = 38.2
 
-        text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON’T touch the surface of the box'
+        text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
-        time.sleep(2)
+        time.sleep(4)
         text = f'{temperature} degrees. Thank you.'
         if temperature > 38:
             text = f'You are not allowed in because your temperature ({temperature}) is over 38 degrees. You might have a fever.'
             self.save_text_to_file(text) 
-            time.sleep(2)
+            time.sleep(4)
             text = f'We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe.'
             self.save_text_to_file(text) 
-            time.sleep(2)
+            time.sleep(5)
             self.fail()
         else:
             text = f'Your temperature was {temperature} degrees.'
             self.save_text_to_file(text) 
-            time.sleep(2)
+            #time.sleep(5)
+            self.speech_to_text.fine_tune(duration=3)
             self.question1()
 
     def question1(self):
-        self.save_text_to_file("Answer YES or NO")
-        self.speech_to_text.fine_tune(duration=3)
-        self.save_text_to_file("""Do you have any of the following: a persistent cough? difficulty breathing? a sore throat?""")
-        time.sleep(0.2)
-        answer = self.speech_to_text.listen_and_predict(online=False)
+        #self.save_text_to_file("Answer YES or NO")
+        #self.speech_to_text.fine_tune(duration=3)
+        self.save_text_to_file("""Do you have any of the following: a persistent cough? difficulty breathing? a sore throat? Wait for the instruction to say your answer.""")
+        time.sleep(5)
+        self.save_text_to_file("Answer YES or NO and wait for response") 
+        answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
         print(f'Answer of question was: {answer}')
         if answer == 'yes':
-            text = f'You’re not allowed in because you might have covid-19 symptoms.'
+            #text = f'You are not allowed in because you might have covid-19 symptoms.'
+            #self.save_text_to_file(text) 
+            #time.sleep(2)
+            text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
             self.save_text_to_file(text) 
-            time.sleep(2)
-            text = f'We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
-            self.save_text_to_file(text) 
+            time.sleep(5)
             self.fail()
         elif answer == 'no':
+            #self.question2()
+            self.speech_to_text.fine_tune(duration=2)
             self.question2()
         else:
-            text = f'Sorry, but we could not understand you. Please clearly say YES or NO'
+            text = f'Sorry, but we could not understand you. You need to speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
             self.question1()
 
     def question2(self):
-        self.save_text_to_file("Answer YES or NO")
-        self.speech_to_text.fine_tune(duration=2)
-        self.save_text_to_file("Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks?")
-        time.sleep(0.2)
-        answer = self.speech_to_text.listen_and_predict(online=False)
+        #self.save_text_to_file("Answer YES or NO")
+        #self.speech_to_text.fine_tune(duration=2)
+        self.save_text_to_file("Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks? Wait for the instruction to say your answer.")
+        time.sleep(5)
+        self.save_text_to_file("Answer YES or NO and wait for the response")
+        answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
         print(f'Answer of question was: {answer}')
 
         if answer == 'yes':
-            text = f'You’re not allowed in because you might have covid-19 symptoms.'
-            self.save_text_to_file(text) 
-            time.sleep(2)
-            text = f'We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
+            #text = f'You are not allowed in because you might have covid-19 symptoms.'
+            #self.save_text_to_file(text) 
+            #time.sleep(2)
+            text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
+            time.sleep(5)
             self.save_text_to_file(text) 
             self.fail()
         elif answer == 'no':
             self.passed()
         else:
-            text = f'Sorry, but we could not understand you. Please clearly say YES or NO'
+            text = f'Sorry, but we could not understand you. Please speak clearly when prompted.'
             self.save_text_to_file(text) 
             time.sleep(2)
             self.question2()
 
     def passed(self):
-        if self.recognized_name != 'Unkown':
-            self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
-            time.sleep(2)
-            self.start()
-        else:
-            time.sleep(2)
-            self.get_phone_number()
+        #if self.recognized_name != 'Unkown':
+        self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
+        time.sleep(5)
+        self.start()
+        #else:
+         #   time.sleep(2)
+         #  self.get_phone_number()
 
     def passed_unkown(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
