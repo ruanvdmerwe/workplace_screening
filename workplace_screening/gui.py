@@ -78,25 +78,30 @@ class WorkPlaceScreening(object):
     def videoLoop(self):
             frame_counter = 0
             text = "STOP! We need to check your mask, temperature and symptoms before you enter."
-            continue_to_questions = False
+
+            try:
+                with open ('./workplace_screening/state.pkl', 'rb') as myfile:  
+                    text = pickle.load(myfile)
+            except:
+                pass
 
             while not self.stopEvent.is_set():
-
-                try:
-                    with open('./workplace_screening/frame.pkl', 'wb') as filetowrite:
-                        pickle.dump(self.frame, filetowrite)
-
-                    with open ('./workplace_screening/state.pkl', 'rb') as myfile:  # Open lorem.txt for reading text
-                        text = pickle.load(myfile)
-                except:
-                    pass
+                
+                if frame_counter == 5:
+                    try:
+                        with open('./workplace_screening/frame.pkl', 'wb') as filetowrite:
+                            pickle.dump(self.frame, filetowrite)                        
+                    except:
+                        pass
+                     
+                    frame_counter = 0
 
 
                     
                 self.frame = self.vs.read()
-                self.frame = resize(self.frame, width=900)
+                self.frame = resize(self.frame, width=600)
                 
-                self.frame = resize(self.frame, width=900)
+                self.frame = resize(self.frame, width=600)
                 image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
                 image = add_text_to_image(image, text)
                 image = Image.fromarray(image)

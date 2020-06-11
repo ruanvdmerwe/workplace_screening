@@ -114,10 +114,10 @@ class WorkPlaceScreening(object):
             self.question1()
 
     def question1(self):
-        self.speech_to_text.fine_tune(duration=3)
         self.save_text_to_file("Answer YES or NO")
-        time.sleep(2)
+        self.speech_to_text.fine_tune(duration=3)
         self.save_text_to_file("""Do you have any of the following: a persistent cough? difficulty breathing? a sore throat?""")
+        time.sleep(0.2)
         answer = self.speech_to_text.listen_and_predict(online=False)
         print(f'Answer of question was: {answer}')
         if answer == 'yes':
@@ -133,13 +133,13 @@ class WorkPlaceScreening(object):
             text = f'Sorry, but we could not understand you. Please clearly say YES or NO'
             self.save_text_to_file(text) 
             time.sleep(2)
-            self.question2()
+            self.question1()
 
     def question2(self):
-        self.speech_to_text.fine_tune(duration=3)
         self.save_text_to_file("Answer YES or NO")
-        time.sleep(2)
+        self.speech_to_text.fine_tune(duration=2)
         self.save_text_to_file("Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks?")
+        time.sleep(0.2)
         answer = self.speech_to_text.listen_and_predict(online=False)
         print(f'Answer of question was: {answer}')
 
@@ -177,9 +177,9 @@ class WorkPlaceScreening(object):
         pass
 
     def get_phone_number(self):
-        self.save_text_to_file("Please say your contact number in Plain English.")
         self.speech_to_text.fine_tune(duration=3)
-        time.sleep(2)
+        self.save_text_to_file("Please say your contact number in Plain English.")
+        time.sleep(0.2)
         phone_number = self.speech_to_text.listen_and_predict(online=False)
 
         self.speech_to_text.fine_tune(duration=2)

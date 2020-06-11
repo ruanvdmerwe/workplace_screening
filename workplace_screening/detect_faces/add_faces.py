@@ -131,6 +131,8 @@ class FaceIdentifyDataCreation(ImageAndVideo):
             
             encodings = []
             for face in self.faces:
+                mean, std = face.mean(), face.std()
+                face = (face - mean) / std
                 self.embedding_model.set_tensor(self.input_details[0]['index'], face)
                 self.embedding_model.invoke()
                 predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])[0]
