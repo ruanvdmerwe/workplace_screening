@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+import sys
+
+# uncomment for local development:
+# Replace RPi library with a mock (if you're rnot running on a Pi)
+import fake_rpi
+sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+
+import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
 from detect_faces.recognize import FaceIdentifier
 from voice_recognition.voice_recognition import SpeechToText
@@ -21,8 +31,12 @@ class WorkPlaceScreening(object):
         self.speech_to_text = SpeechToText()
 
     def fail(self):
-        time.sleep(10)
+        time.sleep(5)
         self.start()
+
+    def button_pressed_callback(self, channel):
+        print("Foot pedal callback triggered!")
+        self.fail()
 
     def load_image(self):
         try:
@@ -245,10 +259,17 @@ class WorkPlaceScreening(object):
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 
-work_place_screening = WorkPlaceScreening()
-# try:
-work_place_screening.start()
-# except:
-#     work_place_screening.save_text_to_file("Unforseen error. Starting over")
-#     time.sleep(2)
-#     work_place_screening.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
+
+if __name__ == "__main__":
+    # setup GPIO for foot pedal
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    # initialize new state machine instance
+    controller = WorkPlaceScreening()
+    controller.start()
+
+    # reset state from foot pedal
+    GPIO.add_event_detect(BUTTON_GPIO, GPIO.FALLING,
+            callback=controller.button_pressed_callback, bouncetime=500)
+    
