@@ -1,5 +1,8 @@
 import tensorflow as tf
-from ..core.core import ImageAndVideo
+try:
+    from workplace_screening.core.core import ImageAndVideo
+except ModuleNotFoundError:
+    from core.core import ImageAndVideo
 from imutils import resize
 import numpy as np
 import cv2
@@ -9,6 +12,7 @@ from sklearn.svm import SVC
 from sklearn import preprocessing
 from joblib import load
 from scipy.spatial import distance
+from pathlib import Path
 
 class FaceIdentifier(ImageAndVideo):
     """
@@ -37,21 +41,24 @@ class FaceIdentifier(ImageAndVideo):
 
         self.encodings_location = encodings_location
 
-        if os.path.isfile(encodings_location):
+        try:
+            # assume we've got encodings on disk
             self.encoded_faces = pickle.loads(open(encodings_location, "rb").read()) 
-        else:
-            data = {"encodings": [], "names": []}
-            with open(encodings_location, "wb") as f:
-                f.write(pickle.dumps(data))
-            self.encoded_faces = pickle.loads(open(encodings_location, "rb").read()) 
+        except:
+            # something went wrong, start with an empty state
+            self.encoded_faces = data = {"encodings": [], "names": []}
 
         self.embedding_model = tf.lite.Interpreter(model_path=embeding_model_location)
         self.embedding_model.allocate_tensors()
         self.input_details = self.embedding_model.get_input_details()
         self.output_details = self.embedding_model.get_output_details()   
 
-        self.clf = load('face_recognizer.joblib') 
-        self.le = load('label_encoder.joblib')
+        try:
+            self.clf = load('face_recognizer.joblib') 
+            self.le = load('label_encoder.joblib')
+        except FileNotFoundError:
+            print("\nError: \ttrained model not available on disk. Please train first.\n")
+            raise
 
     def recognize_faces(self, tolerance=0.35, verbose = False, method = 'distance'):
         """

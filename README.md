@@ -1,3 +1,18 @@
+# Using this code
+
+To run the GUI that streams video and text to the screen for the user:
+
+    cd workplace_screening_dev
+    virtualenv env -p python3
+    python workplace_screening/gui.py
+
+Then, in a separate terminal:
+
+    virtualenv env -p python3
+    python workplace_screening/predictions.py
+
+But make sure that you've got a trained model locally. If there are images in the `workplace_screning/faces/<name>` directories, then you can [train the model](#training-the-model). 
+
 # Setup
 
 1. Clone github reporisoty and change to the project folder
@@ -43,7 +58,7 @@
 
 Now, you have a clean Python 3 environment, with no packages installed. To install the required packages:
 
-        pip install -r requirements.txt
+    pip install -r requirements.txt
 
 # Running a few tests
 
@@ -55,7 +70,7 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
 
 1. To stop the stream, press `q`
 
-## Add a new face to model encoding
+## Training the model
 
 1. Add a new folder containing six photos of the new person to the folder containing all of the previous photo folders. This new folder should be the name of the new person.
 

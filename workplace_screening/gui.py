@@ -12,7 +12,7 @@ import time
 import math
 import numpy as np
 import pickle
-from .voice_recognition.voice_recognition import SpeechToText
+from voice_recognition.voice_recognition import SpeechToText
 
 def add_text_to_image(image, text):
     """
@@ -79,8 +79,6 @@ class WorkPlaceScreening(object):
             frame_counter = 0
             text = "STOP! We need to check your mask, temperature and symptoms before you enter."
 
-
-
             while not self.stopEvent.is_set():
 
                 try:
@@ -95,12 +93,9 @@ class WorkPlaceScreening(object):
                             pickle.dump(self.frame, filetowrite)                        
                     except:
                         pass
-                     
                     frame_counter = 0
                     
                 self.frame = self.vs.read()
-                self.frame = resize(self.frame, width=600)
-                
                 self.frame = resize(self.frame, width=600)
                 image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
                 image = add_text_to_image(image, text)
@@ -122,10 +117,8 @@ class WorkPlaceScreening(object):
         self.vs.stop()
         self.root.quit()
 
-
 vs = VideoStream(src=0).start()
 time.sleep(2.0)
 wps = WorkPlaceScreening(vs)
 #wps.root.attributes("-fullscreen", True)
 wps.root.mainloop()
-
