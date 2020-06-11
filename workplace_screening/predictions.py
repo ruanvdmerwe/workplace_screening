@@ -2,10 +2,10 @@
 import sys
 
 # uncomment for local development:
-# Replace RPi library with a mock (if you're rnot running on a Pi)
-import fake_rpi
-sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
-sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+# # Replace RPi library with a mock (if you're rnot running on a Pi)
+# import fake_rpi
+# sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+# sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
 
 import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
