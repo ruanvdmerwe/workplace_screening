@@ -1,7 +1,4 @@
-from workplace_screening.detect_facemask.detect_facemask import FaceMaskDetector
-from workplace_screening.detect_faces.recognize import FaceIdentifier
-from workplace_screening.detect_faces.add_faces import FaceIdentifyDataCreation
-from workplace_screening.voice_recognition.voice_recognition import SpeechToText
+from workplace_screening import FaceMaskDetector, FaceIdentifier, FaceIdentifyDataCreation, SpeechToText
 import numpy as np
 import argparse
 
