@@ -69,7 +69,7 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
 
 1. To stop the stream, press `q`
 
-## Add a new face to model encoding
+## Training the model (E.g. when adding new faces)
 
 1. Add a new folder containing six photos of the new person to the folder containing all of the previous photo folders. This new folder should be the name of the new person.
 

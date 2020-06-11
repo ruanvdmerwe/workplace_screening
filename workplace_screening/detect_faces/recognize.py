@@ -1,5 +1,5 @@
 import tensorflow as tf
-from core.core import ImageAndVideo
+from workplace_screening.core.core import ImageAndVideo
 from imutils import resize
 import numpy as np
 import cv2
