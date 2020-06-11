@@ -2,10 +2,10 @@
 import sys
 
 # uncomment for local development:
-# Replace RPi library with a mock (if you're rnot running on a Pi)
-import fake_rpi
-sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
-sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+# # Replace RPi library with a mock (if you're rnot running on a Pi)
+# import fake_rpi
+# sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+# sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
 
 import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
@@ -45,11 +45,14 @@ class WorkPlaceScreening(object):
         print(text)
         # print to log file
         with open(self.log_file_name, "a") as log_file:
+            text = f"{datetime.now().replace(microsecond=0).isoformat(' ')}\t{text}"
             print(text, file=log_file)
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
-        self.log(f"\nscreening sequence failed for reason: \n{reason}\n")
+        self.log("FAIL: screening sequence failed")
+        self.log(f"reason: {reason}")
+        self.log("")
         time.sleep(5)
         # restart the sequence
         self.wait_for_face()
@@ -67,7 +70,7 @@ class WorkPlaceScreening(object):
                 self.frame = pickle.load(myfile)
 
     def wait_for_face(self):
-        self.log("starting new sequence: waiting for a face...")
+        self.log("RESTARTING: waiting for a face...")
         self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
         
         # keep looping unitl a face is detected
@@ -78,7 +81,7 @@ class WorkPlaceScreening(object):
             number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160,160))
             time.sleep(0.25)
         self.sequence_count += 1
-        self.log(f"FACE DETECTED... starting sequence #{self.sequence_count}")
+        self.log(f"FACE DETECTED: starting sequence #{self.sequence_count}")
         self.start_time = datetime.now().replace(microsecond=0)
  
         self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
@@ -95,7 +98,7 @@ class WorkPlaceScreening(object):
         else:
             self.save_text_to_file("You are not allowed in without a mask. Please wear your mask.")
             time.sleep(4)
-            self.wait_for_face()
+            self.fail("no-mask")
     
     def recognize_person(self):
         
@@ -143,7 +146,7 @@ class WorkPlaceScreening(object):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
-        temperature = 36.3
+        # temperature = 36.3
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
@@ -177,6 +180,7 @@ class WorkPlaceScreening(object):
 
             if temperature is None:
                 self.fail("temperature-reading-timeout", "Couldn't read temperature. Please try again")
+            self.log(f"TEMPERATURE MEASURED: {temperature}")
         else:
             # this is only called in DEV
             time.sleep(4)
@@ -198,7 +202,7 @@ class WorkPlaceScreening(object):
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for response") 
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        self.log(f'Question 1 answer: {answer}')
+        self.log(f'QUESTION 1 ANSWERED: {answer}')
         if answer == 'yes':
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
             self.save_text_to_file(text) 
@@ -219,7 +223,7 @@ class WorkPlaceScreening(object):
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for the response")
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
-        self.log(f'Question 2 answer: {answer}')
+        self.log(f'QUESTION 2 ANSWERED: {answer}')
 
         if answer == 'yes':
             text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
@@ -238,7 +242,8 @@ class WorkPlaceScreening(object):
     def passed(self):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         duration = datetime.now().replace(microsecond=0) - self.start_time
-        self.log(f"success: screening passed (duration {duration})\n")
+        self.log(f"SUCCESS: screening passed (duration {duration})")
+        self.log("")
         time.sleep(15)
         self.wait_for_face()
         # TODO: prompt for phone number
@@ -271,7 +276,8 @@ class WorkPlaceScreening(object):
 
 
     def save_text_to_file(self, text):
-        self.log(f"\n -> {text}\n")
+        self.log(f" -> {text}")
+        self.log("")
         with open('./workplace_screening/state.pkl', 'wb') as file:
             pickle.dump(text, file)
 

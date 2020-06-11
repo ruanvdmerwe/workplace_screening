@@ -156,4 +156,4 @@ workplace_screening/encodings.pkl
 faces/
 *.pkl
 *.joblib
-
+log_*
