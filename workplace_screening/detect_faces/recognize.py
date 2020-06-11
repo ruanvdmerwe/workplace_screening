@@ -80,6 +80,8 @@ class FaceIdentifier(ImageAndVideo):
 
         encodings = []
         for i,face in enumerate(self.faces):
+            mean, std = face.mean(), face.std()
+            face = (face - mean) / std
             self.embedding_model.set_tensor(self.input_details[0]['index'], face)
             self.embedding_model.invoke()
             predicted_encoding = self.embedding_model.get_tensor(self.output_details[0]['index'])
@@ -125,7 +127,7 @@ class FaceIdentifier(ImageAndVideo):
                         print('Matched simalarities')
                         print(sims)
 
-                    average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=2}
+                    average_sim = {name:np.mean(sim)/(counts[name]**2) for name, sim in sims.items() if len(sim)>=1}
 
                     if verbose:
                         print('Final scores')
