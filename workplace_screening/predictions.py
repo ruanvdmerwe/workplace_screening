@@ -135,17 +135,18 @@ class WorkPlaceScreening(object):
             # try reading temperature
             count = 0
             sleep_interval = 0.2 
-            seconds_to_keep_trying = 30  # fail if we couldn't read a temperature on the serial port after this time
-            while count < seconds_to_keep_trying / sleep_interval:
-                data_left = ser.inWaiting()  #check for remaining byte
+            seconds_to_keep_trying = 300  # fail if we couldn't read a temperature on the serial port after this time
+            while count < (seconds_to_keep_trying / sleep_interval):
+                data_left = ser.inWaiting()  # check for remaining bytes
                 input = ser.read(data_left)
-                print(f"serial input: {input}")
-                try:
-                    temperature = float(input)
-                    break
-                except Exception:
-                    # We saw something, but it wasn't a float, so keep going
-                    pass
+                if input:
+                    print(f"serial input: {input}")
+                    try:
+                        temperature = float(input)
+                        break
+                    except Exception:
+                        # We saw something, but it wasn't a float, so keep going
+                        pass
                 time.sleep(0.2)
                 count += 1
 
