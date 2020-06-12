@@ -19,6 +19,9 @@ from collections import Counter
 import serial
 from datetime import datetime
 from pathlib import Path
+from PIL import Image
+import os
+import cv2
 
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
@@ -47,6 +50,17 @@ class WorkPlaceScreening(object):
         with open(self.log_file_name, "a") as log_file:
             text = f"{datetime.now().replace(microsecond=0).isoformat(' ')}\t{text}"
             print(text, file=log_file)
+
+    def log_image(self, reason):
+        # check if folder exists
+        folder = f'image_logs/{str(datetime.now().date())}'
+        if not os.path.exists(f'image_logs/{str(datetime.now().date())}'):
+            os.makedirs(f'image_logs/{str(datetime.now().date())}')
+        # convert from BGR to RGB
+        image = Image.fromarray(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)) 
+        # save image
+        filename = f'{folder}/{datetime.now().replace(microsecond=0)}_{reason}.jpg'.replace(" ", "_")
+        image.save(filename) 
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
@@ -97,7 +111,8 @@ class WorkPlaceScreening(object):
             self.recognize_person()
         else:
             self.save_text_to_file("You are not allowed in without a mask. Please wear your mask.")
-            time.sleep(4)
+            time.sleep(4)    
+            self.log_image("no-mask")
             self.fail("no-mask")
     
     def recognize_person(self):
@@ -143,6 +158,7 @@ class WorkPlaceScreening(object):
                 self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
                 time.sleep(3)
                 self.recognized_name = 'Unkown'
+                self.log_image("unkown-person")
                 self.measure_temperature()
         else:
             self.check_for_mask()
