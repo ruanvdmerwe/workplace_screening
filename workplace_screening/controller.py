@@ -123,7 +123,7 @@ class WorkPlaceScreening(object):
         self.save_text_to_file("Please wait, recognising...")
         names = []
         counter = 0
-        while counter < 50 and len(recognized_names) < 10:
+        while counter < 50 and len(names) < 10:
             counter += 1
             time.sleep(0.2)
             try:
@@ -160,7 +160,7 @@ class WorkPlaceScreening(object):
     def measure_temperature(self):
 
         temperature = None
-        # uncomment the next line to skip temperature reading (e.g. for developing locally)
+        # # uncomment the next line to skip temperature reading (e.g. for developing locally)
         # temperature = 36.3
 
         text = '<--  Please move to the Temperature Box'
