@@ -1,4 +1,5 @@
 pyserial
+pytz
 absl-py==0.9.0
 astor==0.8.1
 astroid==2.4.1
