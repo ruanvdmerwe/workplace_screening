@@ -16,6 +16,8 @@ from imutils.video import VideoStream
 import pickle
 import time
 from collections import Counter
+import requests
+from urllib.parse import quote_plus
 import serial
 from datetime import datetime
 from pathlib import Path
@@ -63,11 +65,20 @@ class WorkPlaceScreening(object):
         filename = f'{folder}/{datetime.now().replace(microsecond=0)}_{reason}.jpg'.replace(" ", "_")
         image.save(filename)
 
+    def log_telegram(self, message):
+        url = f'https://api.telegram.org/bot1229071509:AAGpwsX6U99Z39bXpGpTKmZvPAeE_XAOhcE/sendMessage?chat_id=-1001380311183&text={quote_plus(message)}'
+        response = requests.get(url)
+        if response.status_code != 200:
+            self.log(f"Couldn't log to Telegram. Status code: {response.status_code}")
+        else:
+            self.log(f"Telegram sent: {message}")
+
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
         self.log("FAIL: screening sequence failed")
         self.log(f"reason: {reason}")
         self.log("")
+        self.log_telegram("Screening failed for: {self.recognized_name}. Reason: {reason}")
         time.sleep(5)
         # restart the sequence
         self.wait_for_face()
@@ -118,7 +129,6 @@ class WorkPlaceScreening(object):
             self.fail("no-mask")
 
     def recognize_person(self):
-
         time.sleep(0.5)
         self.save_text_to_file("Please wait, recognising...")
         names = []
@@ -149,9 +159,11 @@ class WorkPlaceScreening(object):
             self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
         else:
             self.log("could not recognize anyone")
-            self.recognized_name = 'Unkown'
+            self.recognized_name = 'Unknown'
             self.log_image("unkown-person")
             self.save_text_to_file(f"Welcome Visitor.")
+            # send notification
+            self.log_telegram("Visitor at screening station.")
         time.sleep(3)
         self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
         time.sleep(3)
@@ -262,6 +274,7 @@ class WorkPlaceScreening(object):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         duration = datetime.now().replace(microsecond=0) - self.start_time
         self.log(f"SUCCESS: screening passed (duration {duration})")
+        self.log_telegram("Succesfull screening for: {self.recognized_name}")
         self.log("")
         time.sleep(15)
         self.wait_for_face()
