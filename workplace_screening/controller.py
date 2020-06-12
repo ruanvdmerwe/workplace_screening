@@ -103,7 +103,7 @@ class WorkPlaceScreening(object):
     def recognize_person(self):
         
         time.sleep(0.5)
-        self.save_text_to_file("Trying to recognise you.")
+        self.save_text_to_file("Please wait, recognising...")
         names = []
         for i in range(10):
             try:
@@ -130,12 +130,18 @@ class WorkPlaceScreening(object):
         if number_of_faces>=1:
             if person != 'Unkown':
                 self.recognized_name = person
-                self.save_text_to_file(f"Thanks for wearing your mask, {str(self.recognized_name).capitalize()}. Going to take your temperature now.")
-                time.sleep(2)
+                self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
+                time.sleep(3)
+
+                self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
+                time.sleep(3)
                 self.measure_temperature()
             else:
+                self.save_text_to_file(f"Welcome Visitor.")
+                time.sleep(3)
+
                 self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
-                time.sleep(2)
+                time.sleep(3)
                 self.recognized_name = 'Unkown'
                 self.measure_temperature()
         else:
@@ -148,7 +154,7 @@ class WorkPlaceScreening(object):
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
         # temperature = 36.3
 
-        text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
+        text = '<--  Please move to the Temperature Box'
         self.save_text_to_file(text)
         
         if temperature is None:
@@ -193,12 +199,13 @@ class WorkPlaceScreening(object):
             self.fail("temperature-too-high", "We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe.")
         else:
             text = f'Your temperature was {temperature} degrees.'
+            time.sleep(5)
             self.save_text_to_file(text)
             self.question_1()
 
     def question_1(self):
         self.speech_to_text.fine_tune(duration=3)
-        self.save_text_to_file("Do you have any of the following: a persistent cough? difficulty breathing? a sore throat? Wait for the instruction to say your answer.")
+        self.save_text_to_file("Do you have any of the following?\na persistent cough? \ndifficulty breathing? \na sore throat? \nWait for the instruction to say your answer.")
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for response") 
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
