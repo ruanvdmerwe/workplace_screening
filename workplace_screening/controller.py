@@ -122,50 +122,40 @@ class WorkPlaceScreening(object):
         time.sleep(0.5)
         self.save_text_to_file("Please wait, recognising...")
         names = []
-        for i in range(10):
+        counter = 0
+        while counter < 50 and len(recognized_names) < 10:
+            counter += 1
+            time.sleep(0.2)
             try:
-                time.sleep(0.2)
                 self.load_image()
                 self.face_recognizer.load_image_from_frame(self.frame)
+                # check if a face is present
                 number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160, 160))
-                recognized_names = self.face_recognizer.recognize_faces(
-                    tolerance=0.41, verbose=False, method='distance')
-                recognized_names.append('Unkown')
-                names.append(recognized_names[0])
+                if number_of_faces >= 1:
+                    # only try recognizing faces if a face was present
+                    recognized_names = self.face_recognizer.recognize_faces(
+                        tolerance=0.41, verbose=False, method='distance')
+                    names = names + recognized_names  # append names that were recognized, even duplicates
             except:
-                time.sleep(0.2)
-                self.load_image()
-                self.face_recognizer.load_image_from_frame(self.frame)
-                number_of_faces = self.face_recognizer.detect_faces(probability=0.8, face_size=(160, 160))
-                recognized_names = self.face_recognizer.recognize_faces(
-                    tolerance=0.41, verbose=False, method='distance')
-                recognized_names.append('Unkown')
-                names.append(recognized_names[0])
+                # something went wrong, let's ignore the sample
+                pass
 
-        name = Counter(names)
-        person = name.most_common(1)[0][0]
+        if len(names) > 0:
+            name = Counter(names)
+            person = name.most_common(1)[0][0]
 
-        self.log(f'Recognized {person}')
-        if number_of_faces >= 1:
-            if person != 'Unkown':
-                self.recognized_name = person
-                self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
-                time.sleep(3)
-
-                self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
-                time.sleep(3)
-                self.measure_temperature()
-            else:
-                self.save_text_to_file(f"Welcome Visitor.")
-                time.sleep(3)
-
-                self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
-                time.sleep(3)
-                self.recognized_name = 'Unkown'
-                self.log_image("unkown-person")
-                self.measure_temperature()
+            self.log(f'Recognized {person}')
+            self.recognized_name = person
+            self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
         else:
-            self.check_for_mask()
+            self.log("could not recognize anyone")
+            self.recognized_name = 'Unkown'
+            self.log_image("unkown-person")
+            self.save_text_to_file(f"Welcome Visitor.")
+        time.sleep(3)
+        self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
+        time.sleep(3)
+        self.measure_temperature()
 
     def measure_temperature(self):
 
