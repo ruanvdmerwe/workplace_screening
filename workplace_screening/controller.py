@@ -79,6 +79,7 @@ class WorkPlaceScreening(object):
             with open('./workplace_screening/frame.pkl', 'rb') as myfile: 
                 self.frame = pickle.load(myfile)
         except:
+            # TODO: handle retries in a loop, rather than just once-off
             time.sleep(0.1)
             with open('./workplace_screening/frame.pkl', 'rb') as myfile: 
                 self.frame = pickle.load(myfile)
@@ -301,9 +302,14 @@ class WorkPlaceScreening(object):
     def save_text_to_file(self, text):
         self.log(f" -> {text}")
         self.log("")
-        with open('./workplace_screening/state.pkl', 'wb') as file:
-            pickle.dump(text, file)
-
+        try:
+            with open('./workplace_screening/state.pkl', 'wb') as file:
+                pickle.dump(text, file)
+        except:
+            # TODO: handle retries in a loop, rather than just once-off
+            time.sleep(0.1)
+            with open('./workplace_screening/state.pkl', 'wb') as file:
+                pickle.dump(text, file)
 
 if __name__ == "__main__":
     # setup GPIO for foot pedal
