@@ -24,10 +24,12 @@ from pathlib import Path
 from PIL import Image
 import os
 import cv2
+import pytz
 
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
 BAUD_RATE = 57600
+LOCATION_KEY = os.environ.get('LOCATION_KEY', 'dev')
 TELEGRAM_API_KEY = os.environ.get('TELEGRAM_API_KEY')
 BACKEND_USERNAME = os.environ.get('BACKEND_USERNAME')
 BACKEND_PASSWORD = os.environ.get('BACKEND_PASSWORD')
@@ -79,12 +81,46 @@ class WorkPlaceScreening(object):
         else:
             self.log("skip logging to Telegram... TELEGRAM_API_KEY env variable not set")
 
+    def log_to_backend(self):
+
+        url = "https://workplacescreening.herokuapp.com/api"
+        try:
+            # get access token
+            response = requests.post(url + "/authenticate", json = {
+                "password": BACKEND_PASSWORD,
+                "username": BACKEND_USERNAME
+            })
+
+            if response.status_code != 200:
+                self.log(f"Error authentication with backend API. Status code: {response.status_code}")
+            else:
+                id_token = response.json().get("id_token")
+
+                # post a new record
+                headers = {'Authorization': f'Bearer {id_token}'}
+                payload = {
+                    "eventDateTime": datetime.utcnow().replace(tzinfo=pytz.utc).isoformat(),
+                    "firstname": self.recognized_name,
+                    "lastname": "-",  # this is expected by the backend, but we don't use it yet
+                    "locationId": LOCATION_KEY,
+                    "mask": self.mask,
+                    "symptoms": self.symptoms,
+                    "contact": self.contact,  # this is a new field... not expected by the backend
+                    "temperature": self.temperature
+                }
+                response = requests.post(url + "/screeningevents", json=payload, headers=headers)
+                if response.status_code != 200:
+                    self.log(f"Error posting record to backend API. Status code: {response.status_code}")
+        except BaseException as e:
+            self.log(f"Exception while trying to log record to backend: {e}")
+
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
         self.log("FAIL: screening sequence failed")
         self.log(f"reason: {reason}")
         self.log("")
-        self.log_telegram("Screening failed for: {self.recognized_name}. Reason: {reason}")
+        self.log_telegram(f"Screening failed for: {self.recognized_name}. Reason: {reason}")
+        self.log_to_backend()
         time.sleep(5)
         # restart the sequence
         self.wait_for_face()
@@ -105,8 +141,15 @@ class WorkPlaceScreening(object):
                 pass
 
     def wait_for_face(self):
+        # reset state
+        self.mask = None
+        self.recognized_name = None
+        self.temperature = None
+        self.symptoms = None
+        self.contact = None
+
         self.log("RESTARTING: waiting for a face...")
-        self.save_text_to_file("STOP! We need to check your mask, temperature and symptoms before you enter.")
+        self.save_text_to_file("We need to check your mask, temperature and symptoms before you enter.")
 
         # keep looping unitl a face is detected
         number_of_faces = 0
@@ -216,6 +259,7 @@ class WorkPlaceScreening(object):
             if temperature is None:
                 self.fail("temperature-reading-timeout", "Couldn't read temperature. Please try again")
             self.log(f"TEMPERATURE MEASURED: {temperature}")
+            self.temperature = temperature
         else:
             # this is only called in DEV
             time.sleep(4)
@@ -282,8 +326,9 @@ class WorkPlaceScreening(object):
         self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
         duration = datetime.now().replace(microsecond=0) - self.start_time
         self.log(f"SUCCESS: screening passed (duration {duration})")
-        self.log_telegram("Succesfull screening for: {self.recognized_name}")
+        self.log_telegram(f"Succesfull screening for: {self.recognized_name}")
         self.log("")
+        self.log_to_backend()
         time.sleep(15)
         self.wait_for_face()
         # TODO: prompt for phone number
