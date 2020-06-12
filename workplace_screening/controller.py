@@ -87,14 +87,16 @@ class WorkPlaceScreening(object):
         self.fail("foot-pedal-interrupt")
 
     def load_image(self):
-        try:
-            with open('./workplace_screening/frame.pkl', 'rb') as myfile:
-                self.frame = pickle.load(myfile)
-        except:
-            # TODO: handle retries in a loop, rather than just once-off
-            time.sleep(0.1)
-            with open('./workplace_screening/frame.pkl', 'rb') as myfile:
-                self.frame = pickle.load(myfile)
+        counter = 0
+        while counter < 10:
+            counter += 1
+            try:
+                with open('./workplace_screening/frame.pkl', 'rb') as myfile:
+                    self.frame = pickle.load(myfile)
+                    break
+            except:
+                time.sleep(0.1)
+                pass
 
     def wait_for_face(self):
         self.log("RESTARTING: waiting for a face...")
