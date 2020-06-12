@@ -28,6 +28,9 @@ import cv2
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
 BAUD_RATE = 57600
+TELEGRAM_API_KEY = os.environ.get('TELEGRAM_API_KEY')
+BACKEND_USERNAME = os.environ.get('BACKEND_USERNAME')
+BACKEND_PASSWORD = os.environ.get('BACKEND_PASSWORD')
 
 
 class WorkPlaceScreening(object):
@@ -66,12 +69,15 @@ class WorkPlaceScreening(object):
         image.save(filename)
 
     def log_telegram(self, message):
-        url = f'https://api.telegram.org/bot1229071509:AAGpwsX6U99Z39bXpGpTKmZvPAeE_XAOhcE/sendMessage?chat_id=-1001380311183&text={quote_plus(message)}'
-        response = requests.get(url)
-        if response.status_code != 200:
-            self.log(f"Couldn't log to Telegram. Status code: {response.status_code}")
+        if TELEGRAM_API_KEY is not None:
+            url = f'https://api.telegram.org/bot1229071509:{TELEGRAM_API_KEY}/sendMessage?chat_id=-1001380311183&text={quote_plus(message)}'
+            response = requests.get(url)
+            if response.status_code != 200:
+                self.log(f"Couldn't log to Telegram. Status code: {response.status_code}")
+            else:
+                self.log(f"Telegram sent: {message}")
         else:
-            self.log(f"Telegram sent: {message}")
+            self.log("skip logging to Telegram... TELEGRAM_API_KEY env variable not set")
 
     def fail(self, reason="unspecified", message="Restarting sequence..."):
         self.save_text_to_file(message)
