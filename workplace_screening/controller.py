@@ -162,7 +162,7 @@ class WorkPlaceScreening(object):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
-        #temperature = 36.3
+        # temperature = 36.3
 
         text = 'Slowly move closer to the box. Keep still until you see the green light and hear a beep. DON NOT touch the surface of the box'
         self.save_text_to_file(text)
