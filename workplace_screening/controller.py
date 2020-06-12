@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-#uncomment for local development:
+# uncomment for local development:
 # # Replace RPi library with a mock (if you're rnot running on a Pi)
 # import fake_rpi
 # sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
