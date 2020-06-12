@@ -157,3 +157,4 @@ faces/
 *.pkl
 *.joblib
 log_*
+image_logs/*
