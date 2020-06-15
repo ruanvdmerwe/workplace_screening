@@ -32,17 +32,17 @@ def add_text_to_image(image, text):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 0.7
-    color = (255, 0, 0)
+    color = (255, 255, 255)
     thickness = 1
     height, width, dim = image.shape
     org = (20, height-50)
     number_of_characters = len(text)
-
-    if number_of_characters < 42:
+    print(number_of_characters)
+    if number_of_characters < 65:
         image = cv2.rectangle(image, (0, height), (0 + width, height-50-1*25 - 25), (0, 0, 0), -1)
         return cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA)
     else:
-        number_of_sentences = math.ceil(number_of_characters/42)
+        number_of_sentences = math.ceil(number_of_characters/65)
         words_split = text.split()
         sentences = np.array_split(words_split, number_of_sentences)
         image = cv2.rectangle(image, (0, height), (0 + width, height-50-len(sentences)*25 - 25), (0, 0, 0), -1)
@@ -77,7 +77,7 @@ class WorkPlaceScreening(object):
 
     def videoLoop(self):
         frame_counter = 0
-        text = "STOP! We need to check your mask, temperature and symptoms before you enter."
+        text = "We need to check your mask, temperature and symptoms before you enter."
 
         while not self.stopEvent.is_set():
 
@@ -96,7 +96,7 @@ class WorkPlaceScreening(object):
                 frame_counter = 0
 
             self.frame = self.vs.read()
-            self.frame = resize(self.frame, width=600)
+            self.frame = resize(self.frame, width=800, height = 600)
             image = cv2.flip(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB), 1)
             image = add_text_to_image(image, text)
             image = Image.fromarray(image)
@@ -105,7 +105,7 @@ class WorkPlaceScreening(object):
             if self.panel is None:
                 self.panel = tki.Label(image=image)
                 self.panel.image = image
-                self.panel.pack(side="left", padx=1, pady=1)
+                self.panel.pack(fill='both')
             else:
                 self.panel.configure(image=image)
                 self.panel.image = image
@@ -123,5 +123,5 @@ if __name__ == "__main__":
     vs = VideoStream(src=0).start()
     time.sleep(2.0)
     wps = WorkPlaceScreening(vs)
-    #wps.root.attributes("-fullscreen", True)
+    wps.root.attributes("-fullscreen", True)
     wps.root.mainloop()
