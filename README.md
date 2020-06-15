@@ -103,7 +103,7 @@ Now, you have a clean Python 3 environment, with no packages installed. To insta
 
 1. From the project folder:
 
-        python test.py -n workplace_screening/faces/ -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite --voice False --online False -l False
+        python train_recogniser.py -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite -n workplace_screening/faces
     
 ## Create a livestream for face recognition
 
