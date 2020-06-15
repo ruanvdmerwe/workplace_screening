@@ -3,12 +3,13 @@
 To run the GUI that streams video and text to the screen for the user:
 
     cd workplace_screening_dev
-    virtualenv env -p python3
+    source env/bin/activate
     python workplace_screening/gui.py
 
 Then, in a separate terminal:
 
-    virtualenv env -p python3
+    source .env
+    source env/bin/activate
     python workplace_screening/controller.py
 
 But make sure that you've got a trained model locally. If there are images in the `workplace_screning/faces/<name>` directories, then you can [train the model](#training-the-model). 
