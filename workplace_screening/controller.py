@@ -156,8 +156,15 @@ class WorkPlaceScreening(object):
         while number_of_faces == 0:
             self.load_image()
             self.face_mask_detector.load_image_from_frame(self.frame)
-            number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(160, 160))
+            number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(224, 224))
             time.sleep(0.25)
+            # ensure no one just walked by
+            if number_of_faces >= 1:
+                time.sleep(1)
+                self.load_image()
+                self.face_mask_detector.load_image_from_frame(self.frame)
+                number_of_faces = self.face_mask_detector.detect_faces(probability=0.8, face_size=(224, 224))
+
         self.sequence_count += 1
         self.log(f"FACE DETECTED: starting sequence #{self.sequence_count}")
         self.start_time = datetime.now().replace(microsecond=0)
@@ -184,7 +191,7 @@ class WorkPlaceScreening(object):
         self.save_text_to_file("Please wait, recognising...")
         names = []
         counter = 0
-        while counter < 50 and len(names) < 10:
+        while counter < 50 and len(names) < 5:
             counter += 1
             time.sleep(0.2)
             try:
