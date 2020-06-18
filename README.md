@@ -12,7 +12,9 @@ Then, in a separate terminal:
     source env/bin/activate
     python workplace_screening/controller.py
 
-But make sure that you've got a trained model locally. If there are images in the `workplace_screening/faces/<name>` directories, then you can [train the model](#training-the-model). 
+But make sure that you've got a trained model locally. If there are images in the `workplace_screening/faces/<name>` directories, then you can [train the model](#training-the-model). To do this simply run:
+
+    python train_recogniser.py -f workplace_screening/encodings.pkl -e workplace_screening/face_embedding_model.tflite -n workplace_screening/faces  
 
 # Setup
 
