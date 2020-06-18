@@ -16,7 +16,7 @@ But make sure that you've got a trained model locally. If there are images in th
 
 # Setup
 
-1. Clone github reporisoty and change to the project folder
+1. Clone github repository and change to the project folder
         
 1. If on Raspberry Pi
 
