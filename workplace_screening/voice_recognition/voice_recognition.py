@@ -90,8 +90,8 @@ class SpeechToText(object):
         text_split = text.split()
         
         # acceptable responses for yes and no
-        acceptable_yes = set(['yes', 'yet'])
-        acceptable_no = set(['no', 'know'])
+        acceptable_yes = set(['yes', 'yet', 'yeah', 'ys', 'yup', 'jip', 'yea', 'yep', 'ja', 'yah'])
+        acceptable_no = set(['no', 'know', 'nope', 'not really', 'never'])
 
         if verbose:
             print(f'Model predicted: {text}')
