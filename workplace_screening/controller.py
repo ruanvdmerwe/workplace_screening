@@ -215,6 +215,10 @@ class WorkPlaceScreening(object):
             self.log(f'Recognized {person}')
             self.recognized_name = person
             self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
+
+            # saving picture if unkown person
+            if str(self.recognized_name).capitalize() == "Unkown":
+                self.log_image("unkown-person")
         else:
             self.log("could not recognize anyone")
             self.recognized_name = 'Unknown'
