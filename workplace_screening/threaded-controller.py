@@ -231,7 +231,7 @@ class Temperature(threading.Thread, ):
         text = 'Please move your head towards the red lights \nuntil they turn green.\nThen hold still until the green lights flash'
         self.logger.save_text_to_file(text)
 
-        if temperature is None:
+        if temperature is None and not GLOBAL_RESET:
             # connect to serial port
             try:
                 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
@@ -261,7 +261,7 @@ class Temperature(threading.Thread, ):
                 time.sleep(0.2)
                 count += 1
 
-            if temperature is None:
+            if temperature is None and not GLOBAL_RESET:
                 fail(self.logger, 
                      "temperature-reading-timeout",
                       "Couldn't read temperature. Please try again",
@@ -400,11 +400,11 @@ if __name__ == "__main__":
             
             face_detected = idle_state.wait_for_face()
 
-            if face_detected and do_not_reset:
+            if face_detected and do_not_reset and not GLOBAL_RESET:
                 start_time = datetime.now()
                 mask = detect_facemask_state.check_for_mask()
                 
-                if mask:
+                if mask and not GLOBAL_RESET:
                     recognized_name = recognise_state.recognize_person()
 
                     if recognized_name == 'Visitor':
@@ -421,7 +421,8 @@ if __name__ == "__main__":
                     time.sleep(3)
                     
                     # starting to read temperature
-                    temperature = temperature_reading_state.measure_temperature()
+                    if not GLOBAL_RESET:
+                        temperature = temperature_reading_state.measure_temperature()
 
                     try:
                         if temperature > 38:
