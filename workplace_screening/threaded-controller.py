@@ -502,7 +502,8 @@ if __name__ == "__main__":
                             # TODO: prompt for phone number
                     except:
                         pass
-                else:
+                    
+                elif not GLOBAL_RESET:
                     logger.save_text_to_file("You are not allowed in without a mask. \nPlease wear your mask.")
                     time.sleep(4)
                     logger.log_image(detect_facemask_state.get_frame(), "no-mask")
