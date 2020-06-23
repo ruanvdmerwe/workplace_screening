@@ -3,9 +3,9 @@ import sys
 
 # uncomment for local development:
 #Replace RPi library with a mock (if you're rnot running on a Pi)
-import fake_rpi
-sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
-sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
+# import fake_rpi
+# sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi
+# sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO # Fake GPIO
 
 import RPi.GPIO as GPIO
 from detect_facemask.detect_facemask import FaceMaskDetector
@@ -226,7 +226,7 @@ class Temperature(threading.Thread, ):
 
         temperature = None
         # uncomment the next line to skip temperature reading (e.g. for developing locally)
-        temperature = 36.3
+        # temperature = 36.3
 
         text = 'Please move your head towards the red lights \nuntil they turn green.\nThen hold still until the green lights flash'
         self.logger.save_text_to_file(text)
