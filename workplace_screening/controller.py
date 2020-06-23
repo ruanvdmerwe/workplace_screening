@@ -28,7 +28,7 @@ import pytz
 
 BUTTON_GPIO = 16
 SERIAL_PORT = "/dev/serial0"
-BAUD_RATE = 57600
+BAUD_RATE = 9600
 LOCATION_KEY = os.environ.get('LOCATION_KEY', 'dev')
 TELEGRAM_API_KEY = os.environ.get('TELEGRAM_API_KEY')
 BACKEND_USERNAME = os.environ.get('BACKEND_USERNAME')
@@ -47,6 +47,8 @@ class WorkPlaceScreening(object):
         self.start_time = datetime.now().replace(microsecond=0)  # ignore microseconds for the sake of brevity
         # start a new log file
         self.log_file_name = f"log_{self.start_time.isoformat('-')}.txt"
+        
+        
         Path(self.log_file_name).touch()
         print(f"STARTING UP\n{self.start_time.isoformat(' ')}")
         print("---------------------------------\n")
@@ -62,8 +64,8 @@ class WorkPlaceScreening(object):
     def log_image(self, reason):
         # check if folder exists
         folder = f'image_logs/{str(datetime.now().date())}'
-        if not os.path.exists(f'image_logs/{str(datetime.now().date())}'):
-            os.makedirs(f'image_logs/{str(datetime.now().date())}')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
         # convert from BGR to RGB
         image = Image.fromarray(cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB))
         # save image
@@ -126,6 +128,7 @@ class WorkPlaceScreening(object):
         self.wait_for_face()
 
     def button_pressed_callback(self, channel):
+        self.interrupted = 1
         self.fail("foot-pedal-interrupt")
 
     def load_image(self):
@@ -142,6 +145,7 @@ class WorkPlaceScreening(object):
 
     def wait_for_face(self):
         # reset state
+        self.interrupted=0
         self.mask = None
         self.recognized_name = None
         self.temperature = None
@@ -149,7 +153,7 @@ class WorkPlaceScreening(object):
         self.contact = None
 
         self.log("RESTARTING: waiting for a face...")
-        self.save_text_to_file("We need to check your mask, temperature and symptoms before you enter.")
+        self.save_text_to_file("We need to check your mask,\ntemperature and symptoms \nbefore you enter.")
 
         # keep looping unitl a face is detected
         number_of_faces = 0
@@ -169,7 +173,7 @@ class WorkPlaceScreening(object):
         self.log(f"FACE DETECTED: starting sequence #{self.sequence_count}")
         self.start_time = datetime.now().replace(microsecond=0)
 
-        self.save_text_to_file("Look directly at the screen. Make sure you can see your whole head.")
+        self.save_text_to_file("Look directly at the screen. \nMake sure you can see your whole head.")
         self.check_for_mask()
 
     def check_for_mask(self):
@@ -181,7 +185,7 @@ class WorkPlaceScreening(object):
         if number_of_faces >= 1 and wearing_facemask:
             self.recognize_person()
         else:
-            self.save_text_to_file("You are not allowed in without a mask. Please wear your mask.")
+            self.save_text_to_file("You are not allowed in without a mask. \nPlease wear your mask.")
             time.sleep(4)
             self.log_image("no-mask")
             self.fail("no-mask")
@@ -215,10 +219,6 @@ class WorkPlaceScreening(object):
             self.log(f'Recognized {person}')
             self.recognized_name = person
             self.save_text_to_file(f"Hi {str(self.recognized_name).capitalize()}.")
-
-            # saving picture if unkown person
-            if str(self.recognized_name).capitalize() == "Unkown":
-                self.log_image("unkown-person")
         else:
             self.log("could not recognize anyone")
             self.recognized_name = 'Unknown'
@@ -227,7 +227,7 @@ class WorkPlaceScreening(object):
             # send notification
             self.log_telegram("Visitor at screening station.")
         time.sleep(3)
-        self.save_text_to_file(f"Thanks for wearing your mask. Going to take your temperature now.")
+        self.save_text_to_file(f"Thanks for wearing your mask. \nGoing to take your temperature now.")
         time.sleep(3)
         self.measure_temperature()
 
@@ -237,7 +237,7 @@ class WorkPlaceScreening(object):
         # # uncomment the next line to skip temperature reading (e.g. for developing locally)
         # temperature = 36.3
 
-        text = '<--  Please move to the Temperature Box'
+        text = 'Please move your head towards the red lights \nuntil they turn green.\nThen hold still until the green lights flash'
         self.save_text_to_file(text)
 
         if temperature is None:
@@ -277,27 +277,28 @@ class WorkPlaceScreening(object):
 
         text = f'{temperature} degrees. Thank you.'
         if temperature > 38:
-            text = f'You are not allowed in because your temperature ({temperature}) is over 38 degrees. You might have a fever.'
+            text = f'You are not allowed in \nbecause your temperature ({temperature}) \nis over 38 degrees. \nYou might have a fever.'
             self.save_text_to_file(text)
             time.sleep(4)
             self.fail("temperature-too-high",
-                      "We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe.")
+                      "We recommend you self-isolate. \nContact the health department \nif you have any concerns. \nThanks for keeping us safe.")
         else:
             text = f'Your temperature was {temperature} degrees.'
-            time.sleep(5)
+            self.speech_to_text.fine_tune(duration=5) # tuning here to reduce time to questions
             self.save_text_to_file(text)
             self.question_1()
 
     def question_1(self):
-        self.speech_to_text.fine_tune(duration=3)
+        if (self.interrupted):
+              return
         self.save_text_to_file(
-            "Do you have any of the following?\na persistent cough? \ndifficulty breathing? \na sore throat? \nWait for the instruction to say your answer.")
+            "Do you have any of the following?\n-A persistent cough? \n-Difficulty breathing? \n-A sore throat? \nWait for the instruction to say your answer.")
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for response")
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
         self.log(f'QUESTION 1 ANSWERED: {answer}')
         if answer == 'yes':
-            text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
+            text = f'You are not allowed in \nbecause you might have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department \nif you have any concerns. Thanks for keeping us safe!'
             self.save_text_to_file(text)
             time.sleep(5)
             self.fail("question-1-symptoms", text)
@@ -305,22 +306,24 @@ class WorkPlaceScreening(object):
             self.question_2()
         else:
             # try again
-            text = f'Sorry, but we could not understand you. You need to speak clearly when prompted.'
+            text = f'Sorry, but we could not understand you. \nYou need to speak clearly when prompted.'
             self.save_text_to_file(text)
             time.sleep(2)
             self.question_1()
 
     def question_2(self):
+        if (self.interrupted):
+              return
         self.speech_to_text.fine_tune(duration=2)
         self.save_text_to_file(
-            "Have you been in contact with anyone who tested positive for covid-19 in the last 2 weeks? Wait for the instruction to say your answer.")
+            "Have you been in contact with anyone \nwho tested positive for covid-19 \nin the last 2 weeks? \nWait for the instruction to say your answer.")
         time.sleep(5)
         self.save_text_to_file("Answer YES or NO and wait for the response")
         answer = self.speech_to_text.listen_and_predict(online=True, verbose=True)
         self.log(f'QUESTION 2 ANSWERED: {answer}')
 
         if answer == 'yes':
-            text = f'You are not allowed in because you might have covid-19 symptoms. We recommend you self-isolate. Contact the health department if you have any concerns. Thanks for keeping us safe!'
+            text = f'You are not allowed in because you \nmight have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department if you have any concerns. \nThanks for keeping us safe!'
             self.save_text_to_file(text)
             time.sleep(5)
             self.fail("question-2-contact", text)
@@ -328,13 +331,13 @@ class WorkPlaceScreening(object):
             self.passed()
         else:
             # try again
-            text = f'Sorry, but we could not understand you. Please speak clearly when prompted.'
+            text = f'Sorry, but we could not understand you. \nPlease speak clearly when prompted.'
             self.save_text_to_file(text)
             time.sleep(2)
             self.question_2()
 
     def passed(self):
-        self.save_text_to_file("All clear! Please sanitise your hands before you enter.")
+        self.save_text_to_file("All clear! \nPlease sanitise your hands before you enter.")
         duration = datetime.now().replace(microsecond=0) - self.start_time
         self.log(f"SUCCESS: screening passed (duration {duration})")
         self.log_telegram(f"Succesfull screening for: {self.recognized_name}")

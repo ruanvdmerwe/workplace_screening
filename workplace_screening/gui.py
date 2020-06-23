@@ -31,25 +31,28 @@ def add_text_to_image(image, text):
     """
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 0.7
+    fontScale = 1
+    lineheight = 35
+    boxheight = 130
     color = (255, 255, 255)
-    thickness = 1
+    thickness = 2
     height, width, dim = image.shape
-    org = (20, height-50)
+    org = (lineheight, height-140)
     number_of_characters = len(text)
     print(number_of_characters)
-    if number_of_characters < 65:
-        image = cv2.rectangle(image, (0, height), (0 + width, height-50-1*25 - 25), (0, 0, 0), -1)
+    if number_of_characters < 45:
+        image = cv2.rectangle(image, (0, height), (0 + width, height-boxheight-1*lineheight ), (0, 0, 0), -1)
         return cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA)
     else:
-        number_of_sentences = math.ceil(number_of_characters/65)
-        words_split = text.split()
-        sentences = np.array_split(words_split, number_of_sentences)
-        image = cv2.rectangle(image, (0, height), (0 + width, height-50-len(sentences)*25 - 25), (0, 0, 0), -1)
+        #number_of_sentences = math.ceil(number_of_characters/45)
+        #words_split = text.split()
+        #sentences = np.array_split(words_split, number_of_sentences)
+        sentences = text.splitlines()
+        image = cv2.rectangle(image, (0, height), (0 + width, height-boxheight-len(sentences)*lineheight ), (0, 0, 0), -1)
 
         for i, sentence in enumerate(reversed(sentences)):
-            sentence = " ".join(sentence)
-            org = (20, height-50-i*25)
+            #sentence = " ".join(sentence)
+            org = (lineheight, height-boxheight-i*lineheight)
             image = cv2.putText(image, sentence, org, font, fontScale, color, thickness, cv2.LINE_AA)
     return image
 
