@@ -49,6 +49,7 @@ def load_image():
             pass
 
 def button_pressed_callback(logger):
+    global GLOBAL_RESET
     GLOBAL_RESET = True
     fail(logger, "foot-pedal-interrupt")
 
@@ -382,7 +383,7 @@ if __name__ == "__main__":
                           callback=lambda x: button_pressed_callback(logger),
                           bouncetime=500)
 
-    logger.log("RESTARTING: waiting for a face...")
+    logger.log("RESTARTING: waiting for a face...")    
 
     # main loop
     while True:
@@ -396,7 +397,7 @@ if __name__ == "__main__":
         logger.save_text_to_file("We need to check your mask,\ntemperature and symptoms \nbefore you enter.")
 
         while do_not_reset and not GLOBAL_RESET:
-
+            
             face_detected = idle_state.wait_for_face()
 
             if face_detected and do_not_reset:
@@ -421,81 +422,85 @@ if __name__ == "__main__":
                     
                     # starting to read temperature
                     temperature = temperature_reading_state.measure_temperature()
-                    if temperature > 38:
-                        text = f'You are not allowed in \nbecause your temperature ({temperature}) \nis over 38 degrees. \nYou might have a fever.'
-                        logger.save_text_to_file(text)
-                        time.sleep(4)
-                        fail(logger,
-                            "temperature-too-high",
-                            "We recommend you self-isolate. \nContact the health department \nif you have any concerns. \nThanks for keeping us safe.",
-                            recognized_name, mask, symptoms, contact, temperature)
-                        do_not_reset = False
-                    else:
-                        logger.save_text_to_file(f'Your temperature was {temperature} degrees.')
-                        
-                        # question 1
-                        answer = 'Unkown'
-                        while answer=='Unkown' and not GLOBAL_RESET:
-                            # starting with speech recognition
-                            answer = question1_state.answer_question()
 
-                            if answer == 'no':
-                               answer = 'no'
-                               symptoms = 'no'
-                            elif answer == 'yes':
-                                text = f'You are not allowed in \nbecause you might have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department \nif you have any concerns. Thanks for keeping us safe!'
-                                logger.save_text_to_file(text)
-                                time.sleep(5)
-                                fail(logger, "question-1-symptoms", text,
-                                     recognized_name, mask, symptoms, contact, temperature)
-                                do_not_reset = False
-                            elif answer == 'reset':
-                                do_not_reset = False
-                            else:
-                                # try again
-                                text = f'Sorry, but we could not understand you. \nYou need to speak clearly when prompted.'
-                                logger.save_text_to_file(text)
-                                time.sleep(2)
-                                answer='Unkown'
-                        
-                                                # question 1
-                        answer = 'Unkown'
-                        while answer=='Unkown' and not GLOBAL_RESET and do_not_reset:
-                            # starting with speech recognition
-                            answer = question2_state.answer_question()
+                    try:
+                        if temperature > 38:
+                            text = f'You are not allowed in \nbecause your temperature ({temperature}) \nis over 38 degrees. \nYou might have a fever.'
+                            logger.save_text_to_file(text)
+                            time.sleep(4)
+                            fail(logger,
+                                "temperature-too-high",
+                                "We recommend you self-isolate. \nContact the health department \nif you have any concerns. \nThanks for keeping us safe.",
+                                recognized_name, mask, symptoms, contact, temperature)
+                            do_not_reset = False
+                        else:
+                            logger.save_text_to_file(f'Your temperature was {temperature} degrees.')
+                            
+                            # question 1
+                            answer = 'Unkown'
+                            while answer=='Unkown' and not GLOBAL_RESET:
+                                # starting with speech recognition
+                                answer = question1_state.answer_question()
 
-                            if answer == 'no':
-                               answer = 'no'
-                               contact = 'no'
-                            elif answer == 'yes':
-                                text = f'You are not allowed in \nbecause you might have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department \nif you have any concerns. Thanks for keeping us safe!'
-                                logger.save_text_to_file(text)
-                                time.sleep(5)
-                                fail(logger, "question-2-contact", text,
-                                     recognized_name, mask, symptoms, contact, temperature)
-                                do_not_reset = False
-                            elif answer == 'reset':
-                                do_not_reset = False
-                            else:
-                                # try again
-                                text = f'Sorry, but we could not understand you. \nYou need to speak clearly when prompted.'
-                                logger.save_text_to_file(text)
-                                time.sleep(2)
-                                answer='Unkown'
-                        
-                        if answer=='no':
-                            logger.save_text_to_file("All clear! \nPlease sanitise your hands before you enter.")
-                            duration = datetime.now().replace(microsecond=0) - start_time
-                            logger.log(f"SUCCESS: screening passed (duration {duration})")
-                            logger.log_telegram(f"Succesfull screening for: {recognized_name}")
-                            logger.log("")
-                            logger.log_to_backend(recognized_name=recognized_name,
-                                                    mask=mask,
-                                                    symptoms = 'no',
-                                                    contact = 'no',
-                                                    temperature = temperature)
-                            time.sleep(15)
-                        # TODO: prompt for phone number
+                                if answer == 'no':
+                                    answer = 'no'
+                                    symptoms = 'no'
+                                elif answer == 'yes':
+                                    text = f'You are not allowed in \nbecause you might have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department \nif you have any concerns. Thanks for keeping us safe!'
+                                    logger.save_text_to_file(text)
+                                    time.sleep(5)
+                                    fail(logger, "question-1-symptoms", text,
+                                        recognized_name, mask, symptoms, contact, temperature)
+                                    do_not_reset = False
+                                elif answer == 'reset':
+                                    do_not_reset = False
+                                else:
+                                    # try again
+                                    text = f'Sorry, but we could not understand you. \nYou need to speak clearly when prompted.'
+                                    logger.save_text_to_file(text)
+                                    time.sleep(2)
+                                    answer='Unkown'
+                            
+                                                    # question 1
+                            answer = 'Unkown'
+                            while answer=='Unkown' and not GLOBAL_RESET and do_not_reset:
+                                # starting with speech recognition
+                                answer = question2_state.answer_question()
+
+                                if answer == 'no':
+                                    answer = 'no'
+                                    contact = 'no'
+                                elif answer == 'yes':
+                                    text = f'You are not allowed in \nbecause you might have covid-19 symptoms. \nWe recommend you self-isolate. \nContact the health department \nif you have any concerns. Thanks for keeping us safe!'
+                                    logger.save_text_to_file(text)
+                                    time.sleep(5)
+                                    fail(logger, "question-2-contact", text,
+                                        recognized_name, mask, symptoms, contact, temperature)
+                                    do_not_reset = False
+                                elif answer == 'reset':
+                                    do_not_reset = False
+                                else:
+                                    # try again
+                                    text = f'Sorry, but we could not understand you. \nYou need to speak clearly when prompted.'
+                                    logger.save_text_to_file(text)
+                                    time.sleep(2)
+                                    answer='Unkown'
+                            
+                            if answer=='no':
+                                logger.save_text_to_file("All clear! \nPlease sanitise your hands before you enter.")
+                                duration = datetime.now().replace(microsecond=0) - start_time
+                                logger.log(f"SUCCESS: screening passed (duration {duration})")
+                                logger.log_telegram(f"Succesfull screening for: {recognized_name}")
+                                logger.log("")
+                                logger.log_to_backend(recognized_name=recognized_name,
+                                                        mask=mask,
+                                                        symptoms = 'no',
+                                                        contact = 'no',
+                                                        temperature = temperature)
+                                time.sleep(15)
+                            # TODO: prompt for phone number
+                    except:
+                        pass
                 else:
                     logger.save_text_to_file("You are not allowed in without a mask. \nPlease wear your mask.")
                     time.sleep(4)
