@@ -152,7 +152,7 @@ class Logger(object):
                 pickle.dump(text, file)
 
 
-class Facemask(threading.Thread):
+class Facemask():
 
     def __init__(self, logger):
         self.face_mask_detector = FaceMaskDetector(
@@ -176,7 +176,7 @@ class Facemask(threading.Thread):
         return self.frame
 
 
-class Recognize(threading.Thread, ):
+class Recognize():
 
     def __init__(self, logger):
         self.face_recognizer = FaceIdentifier(encodings_location='./workplace_screening/encodings.pkl',
@@ -217,7 +217,7 @@ class Recognize(threading.Thread, ):
         return self.frame()
 
 
-class Temperature(threading.Thread, ):
+class Temperature():
 
     def __init__(self,logger):
        self.logger = logger
@@ -279,7 +279,7 @@ class Temperature(threading.Thread, ):
             return temperature
 
 
-class Question1(threading.Thread):
+class Question1():
 
     def __init__(self, logger):
         self.speech_to_text = SpeechToText()
@@ -305,7 +305,7 @@ class Question1(threading.Thread):
             return answer
 
 
-class Question2(threading.Thread, ):
+class Question2():
 
     def __init__(self, logger):
         self.speech_to_text = SpeechToText()
