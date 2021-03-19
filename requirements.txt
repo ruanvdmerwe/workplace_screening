@@ -36,7 +36,7 @@ oauthlib==3.1.0
 opencv-contrib-python==4.1.0.25
 opencv-python==4.1.1.26
 opt-einsum==3.2.1
-Pillow==7.1.2
+Pillow==8.1.1
 pocketsphinx==0.1.15
 protobuf==3.12.2
 pyasn1==0.4.8
